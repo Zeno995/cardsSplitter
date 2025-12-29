@@ -1,0 +1,33 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "splittycard",
+          "appId": "1:1094661693162:android:7f68692c1a612c85868193",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "splittycard",
+          "appId": "1:1094661693162:ios:5389972096d5e5c1868193",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "splittycard",
+          "configurations": {
+            "android": "1:1094661693162:android:7f68692c1a612c85868193",
+            "ios": "1:1094661693162:ios:5389972096d5e5c1868193"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

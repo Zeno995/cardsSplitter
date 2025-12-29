@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Regole per le sessioni di gioco
+    match /sessions/{sessionId} {
+      // Qualsiasi utente autenticato (inclusi anonimi) può leggere le sessioni
+      allow read: if request.auth != null;
+      
+      // Solo utenti autenticati non anonimi possono creare sessioni
+      allow create: if request.auth != null 
+                    && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      
+      // Qualsiasi utente autenticato può aggiornare una sessione (per unirsi/aggiungere movimenti)
+      allow update: if request.auth != null;
+      
+      // Solo l'admin può eliminare la sessione
+      allow delete: if request.auth != null 
+                    && request.auth.uid == resource.data.adminId;
+    }
+  }
+}
+

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1094661693162-l4s9skdehg96lna9l5420iu9uoeg00gj.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1094661693162-l4s9skdehg96lna9l5420iu9uoeg00gj</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDBgD_fWy7_HKIQVdMgEk5w3mWF0flRVqo</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1094661693162</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.cardssplitter.cardsSplitter</string>
+	<key>PROJECT_ID</key>
+	<string>splittycard</string>
+	<key>STORAGE_BUCKET</key>
+	<string>splittycard.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1094661693162:ios:5389972096d5e5c1868193</string>
+</dict>
+</plist>

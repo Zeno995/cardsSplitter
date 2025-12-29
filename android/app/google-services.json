@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1094661693162",
+    "project_id": "splittycard",
+    "storage_bucket": "splittycard.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094661693162:android:7f68692c1a612c85868193",
+        "android_client_info": {
+          "package_name": "com.cardssplitter.cards_splitter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1094661693162-4r6p9idkkissgdiqd6t1pbl2jihkn9dm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXMHwy0D4F4HWU5Nmg2pUrRqOdMRQZD3Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1094661693162-4r6p9idkkissgdiqd6t1pbl2jihkn9dm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
