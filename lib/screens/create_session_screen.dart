@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../models/game_mode.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import 'session_detail_screen.dart';
-import 'select_game_mode_screen.dart';
 
 class CreateSessionScreen extends StatefulWidget {
   const CreateSessionScreen({super.key});
@@ -20,7 +19,6 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
   final _nameController = TextEditingController();
   final _nicknameController = TextEditingController();
   bool _isLoading = false;
-  GameMode _selectedGameMode = const GameMode(type: GameType.libera);
 
   @override
   void initState() {
@@ -36,26 +34,14 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
     super.dispose();
   }
 
-  Future<void> _selectGameMode() async {
-    final result = await Navigator.push<GameMode>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SelectGameModeScreen(initialMode: _selectedGameMode),
-      ),
-    );
-    
-    if (result != null) {
-      setState(() => _selectedGameMode = result);
-    }
-  }
-
   Future<void> _createSession() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_nameController.text.trim().isEmpty) {
-      _showError('Inserisci un nome per la sessione');
+      _showError(l10n.enterSessionName);
       return;
     }
     if (_nicknameController.text.trim().isEmpty) {
-      _showError('Inserisci il tuo nickname');
+      _showError(l10n.enterYourNickname);
       return;
     }
 
@@ -70,7 +56,6 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
         name: _nameController.text.trim(),
         adminId: user.uid,
         adminName: _nicknameController.text.trim(),
-        gameMode: _selectedGameMode,
       );
 
       if (mounted) {
@@ -82,7 +67,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
         );
       }
     } catch (e) {
-      _showError('Errore nella creazione: $e');
+      _showError(l10n.creationError(e.toString()));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -99,9 +84,10 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nuova Sessione'),
+        title: Text(l10n.newSessionTitle),
       ),
       body: ChristmasBackground(
         child: SafeArea(
@@ -121,7 +107,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
                 const SizedBox(height: 24),
                 
                 Text(
-                  'Crea una nuova\nsessione di gioco',
+                  l10n.createNewGameSession,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -145,10 +131,10 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
                           controller: _nameController,
                           style: GoogleFonts.lato(color: AppTheme.cream),
                           textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(
-                            labelText: 'Nome sessione',
-                            hintText: 'es. Tombola di Natale 2024',
-                            prefixIcon: Icon(Icons.casino, color: AppTheme.gold),
+                          decoration: InputDecoration(
+                            labelText: l10n.sessionName,
+                            hintText: l10n.sessionNameHint,
+                            prefixIcon: const Icon(Icons.casino, color: AppTheme.gold),
                           ),
                         ),
                         
@@ -158,72 +144,10 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
                           controller: _nicknameController,
                           style: GoogleFonts.lato(color: AppTheme.cream),
                           textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(
-                            labelText: 'Il tuo nickname',
-                            hintText: 'Come vuoi essere chiamato',
-                            prefixIcon: Icon(Icons.person, color: AppTheme.gold),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 20),
-                        
-                        // Selettore modalità di gioco
-                        InkWell(
-                          onTap: _selectGameMode,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.darkGreen.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppTheme.gold.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  _selectedGameMode.icon,
-                                  style: const TextStyle(fontSize: 28),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Modalità di gioco',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 12,
-                                          color: AppTheme.cream.withValues(alpha: 0.6),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _selectedGameMode.displayName,
-                                        style: GoogleFonts.playfairDisplay(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.gold,
-                                        ),
-                                      ),
-                                      if (_selectedGameMode.variantDisplayName != null)
-                                        Text(
-                                          _selectedGameMode.variantDisplayName!,
-                                          style: GoogleFonts.lato(
-                                            fontSize: 12,
-                                            color: AppTheme.cream.withValues(alpha: 0.7),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.chevron_right,
-                                  color: AppTheme.gold,
-                                ),
-                              ],
-                            ),
+                          decoration: InputDecoration(
+                            labelText: l10n.yourNickname,
+                            hintText: l10n.howYouWantToBeCalled,
+                            prefixIcon: const Icon(Icons.person, color: AppTheme.gold),
                           ),
                         ),
                         
@@ -241,7 +165,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
                                   ),
                                 )
                               : const Icon(Icons.add),
-                          label: Text(_isLoading ? 'Creazione...' : 'Crea Sessione'),
+                          label: Text(_isLoading ? l10n.creating : l10n.createSession),
                         ),
                       ],
                     ),
@@ -253,7 +177,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
                 const SizedBox(height: 24),
                 
                 Text(
-                  'Dopo la creazione potrai condividere\nil link con i tuoi amici',
+                  l10n.afterCreatingYouCanShare,
                   style: GoogleFonts.lato(
                     fontSize: 14,
                     color: AppTheme.cream.withValues(alpha: 0.5),

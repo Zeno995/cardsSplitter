@@ -1,6 +1,5 @@
 import 'player.dart';
 import 'movement.dart';
-import 'game_mode.dart';
 import 'game_hand.dart';
 
 class GameSession {
@@ -12,8 +11,8 @@ class GameSession {
   final List<Movement> movements;
   final DateTime createdAt;
   final bool isActive;
-  final GameMode gameMode;
   final ActiveHand? activeHand;
+  final List<String> participantUserIds; // userId dei partecipanti (non admin) per query efficienti
 
   GameSession({
     required this.id,
@@ -24,8 +23,8 @@ class GameSession {
     this.movements = const [],
     required this.createdAt,
     this.isActive = true,
-    this.gameMode = const GameMode(type: GameType.libera),
     this.activeHand,
+    this.participantUserIds = const [],
   });
 
   factory GameSession.fromMap(Map<String, dynamic> map) {
@@ -44,12 +43,13 @@ class GameSession {
           [],
       createdAt: DateTime.parse(map['createdAt'] as String),
       isActive: map['isActive'] as bool? ?? true,
-      gameMode: map['gameMode'] != null
-          ? GameMode.fromMap(map['gameMode'] as Map<String, dynamic>)
-          : const GameMode(type: GameType.libera),
       activeHand: map['activeHand'] != null
           ? ActiveHand.fromMap(map['activeHand'] as Map<String, dynamic>)
           : null,
+      participantUserIds: (map['participantUserIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 
@@ -63,8 +63,8 @@ class GameSession {
       'movements': movements.map((m) => m.toMap()).toList(),
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive,
-      'gameMode': gameMode.toMap(),
       'activeHand': activeHand?.toMap(),
+      'participantUserIds': participantUserIds,
     };
   }
 
@@ -77,9 +77,9 @@ class GameSession {
     List<Movement>? movements,
     DateTime? createdAt,
     bool? isActive,
-    GameMode? gameMode,
     ActiveHand? activeHand,
     bool clearActiveHand = false,
+    List<String>? participantUserIds,
   }) {
     return GameSession(
       id: id ?? this.id,
@@ -90,8 +90,8 @@ class GameSession {
       movements: movements ?? this.movements,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
-      gameMode: gameMode ?? this.gameMode,
       activeHand: clearActiveHand ? null : (activeHand ?? this.activeHand),
+      participantUserIds: participantUserIds ?? this.participantUserIds,
     );
   }
 

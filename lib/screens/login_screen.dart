@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'create_session_screen.dart';
@@ -44,8 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleEmailAuth() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showError('Inserisci email e password');
+      _showError(l10n.enterEmailAndPassword);
       return;
     }
 
@@ -95,10 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: widget.returnToCreateSession 
           ? AppBar(
-              title: const Text('Accedi per creare'),
+              title: Text(l10n.loginToCreate),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.pop(context),
@@ -126,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 
                 Text(
-                  'Cards Splitter',
+                  l10n.appTitle,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
@@ -140,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
                 
                 Text(
-                  'Gestisci i conti dei tuoi giochi natalizi',
+                  l10n.manageHolidayCardGames,
                   style: GoogleFonts.lato(
                     fontSize: 16,
                     color: AppTheme.cream.withValues(alpha: 0.7),
@@ -159,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          _isLogin ? 'Accedi' : 'Registrati',
+                          _isLogin ? l10n.signIn : l10n.signUp,
                           style: Theme.of(context).textTheme.headlineMedium,
                           textAlign: TextAlign.center,
                         ),
@@ -170,9 +173,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           style: GoogleFonts.lato(color: AppTheme.cream),
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email_outlined, color: AppTheme.gold),
+                          decoration: InputDecoration(
+                            labelText: l10n.email,
+                            prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.gold),
                           ),
                         ),
                         
@@ -182,9 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _passwordController,
                           obscureText: true,
                           style: GoogleFonts.lato(color: AppTheme.cream),
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock_outline, color: AppTheme.gold),
+                          decoration: InputDecoration(
+                            labelText: l10n.password,
+                            prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.gold),
                           ),
                         ),
                         
@@ -201,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: AppTheme.cream,
                                   ),
                                 )
-                              : Text(_isLogin ? 'Accedi' : 'Registrati'),
+                              : Text(_isLogin ? l10n.signIn : l10n.signUp),
                         ),
                         
                         const SizedBox(height: 16),
@@ -210,8 +213,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => setState(() => _isLogin = !_isLogin),
                           child: Text(
                             _isLogin
-                                ? 'Non hai un account? Registrati'
-                                : 'Hai già un account? Accedi',
+                                ? l10n.noAccount
+                                : l10n.haveAccount,
                             style: GoogleFonts.lato(color: AppTheme.gold),
                           ),
                         ),
@@ -231,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'oppure',
+                        l10n.or,
                         style: GoogleFonts.lato(
                           color: AppTheme.cream.withValues(alpha: 0.5),
                         ),
@@ -248,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 OutlinedButton.icon(
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                   icon: const Icon(Icons.g_mobiledata, size: 28),
-                  label: const Text('Continua con Google'),
+                  label: Text(l10n.continueWithGoogle),
                 ).animate()
                   .fadeIn(delay: 1000.ms, duration: 600.ms)
                   .slideY(begin: 0.2, end: 0),

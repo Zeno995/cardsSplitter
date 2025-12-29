@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../models/player.dart';
 import '../models/game_mode.dart';
@@ -11,12 +12,18 @@ import '../models/game_hand.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/amount_keypad.dart';
 
 /// Schermata per gestire una partita a Bestia
 class BestiaScreen extends StatefulWidget {
   final String sessionId;
+  final GameMode? initialGameMode;
 
-  const BestiaScreen({super.key, required this.sessionId});
+  const BestiaScreen({
+    super.key, 
+    required this.sessionId,
+    this.initialGameMode,
+  });
 
   @override
   State<BestiaScreen> createState() => _BestiaScreenState();
@@ -50,8 +57,19 @@ class _BestiaScreenState extends State<BestiaScreen> {
     return session.players.firstWhere((p) => p.id == id);
   }
 
+  /// Ottiene il GameMode corrente (dalla mano attiva o da initialGameMode)
+  GameMode _getGameMode(GameSession session) {
+    if (session.activeHand != null) {
+      return GameMode(
+        type: session.activeHand!.gameType,
+        variantId: session.activeHand!.variantId,
+      );
+    }
+    return widget.initialGameMode ?? const GameMode(type: GameType.bestia);
+  }
+
   /// Avvia una nuova mano di Bestia
-  Future<void> _startNewHand(GameSession session) async {
+  Future<void> _startNewHand(GameSession session, String? variantId) async {
     final dbService = context.read<DatabaseService>();
     final authService = context.read<AuthService>();
 
@@ -65,7 +83,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
     final hand = ActiveHand(
       id: _uuid.v4(),
       gameType: GameType.bestia,
-      variantId: session.gameMode.variantId,
+      variantId: variantId,
       createdAt: DateTime.now(),
       createdBy: authService.currentUser?.uid ?? 'anonymous',
       playerOrder: playerOrder,
@@ -99,8 +117,8 @@ class _BestiaScreenState extends State<BestiaScreen> {
       GameSession session, ActiveHand hand, double baseValue) async {
     if (baseValue <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('La quota deve essere maggiore di 0!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.enterValidAmountGreaterThan0),
           backgroundColor: AppTheme.accentRed,
         ),
       );
@@ -293,8 +311,8 @@ class _BestiaScreenState extends State<BestiaScreen> {
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mano annullata! Tutti i movimenti sono stati rimossi.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.handCancelledMovementsRemoved),
           backgroundColor: AppTheme.gold,
         ),
       );
@@ -330,7 +348,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                         size: 60, color: AppTheme.accentRed),
                     const SizedBox(height: 16),
                     Text(
-                      'Sessione non trovata',
+                      AppLocalizations.of(context)!.sessionNotFound,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 20,
                         color: AppTheme.cream,
@@ -339,7 +357,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                     const SizedBox(height: 24),
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Torna indietro'),
+                      child: Text(AppLocalizations.of(context)!.goBack),
                     ),
                   ],
                 ),
@@ -359,11 +377,11 @@ class _BestiaScreenState extends State<BestiaScreen> {
         // Mano attiva
         return Scaffold(
           appBar: AppBar(
-            title: const Row(
+            title: Row(
               children: [
-                Text('🦁', style: TextStyle(fontSize: 24)),
-                SizedBox(width: 8),
-                Text('Bestia'),
+                const Text('🦁', style: TextStyle(fontSize: 24)),
+                const SizedBox(width: 8),
+                Text(AppLocalizations.of(context)!.bestia),
               ],
             ),
             actions: [
@@ -378,7 +396,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Piatto: ${_currencyFormat.format(hand.bestiaPot)}',
+                      '${AppLocalizations.of(context)!.pot}: ${_currencyFormat.format(hand.bestiaPot)}',
                       style: GoogleFonts.lato(
                         color: AppTheme.gold,
                         fontWeight: FontWeight.bold,
@@ -391,7 +409,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 IconButton(
                   icon: const Icon(Icons.undo, color: AppTheme.accentRed),
                   onPressed: () => _showCancelHandDialog(session, hand),
-                  tooltip: 'Annulla Mano',
+                  tooltip: AppLocalizations.of(context)!.cancelHand,
                 ),
               ],
             ],
@@ -407,11 +425,11 @@ class _BestiaScreenState extends State<BestiaScreen> {
   Widget _buildNoActiveHand(GameSession session, bool isAdmin) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           children: [
-            Text('🦁', style: TextStyle(fontSize: 24)),
-            SizedBox(width: 8),
-            Text('Bestia'),
+            const Text('🦁', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.of(context)!.bestia),
           ],
         ),
       ),
@@ -428,7 +446,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                     .scale(),
                 const SizedBox(height: 24),
                 Text(
-                  'Pronto per giocare?',
+                  AppLocalizations.of(context)!.readyToPlay,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -438,8 +456,8 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 const SizedBox(height: 12),
                 Text(
                   isAdmin
-                      ? 'Inizia una nuova mano quando tutti sono pronti'
-                      : 'Aspetta che l\'admin inizi la mano...',
+                      ? AppLocalizations.of(context)!.startHandWhenReady
+                      : AppLocalizations.of(context)!.waitForAdminToStart,
                   style: GoogleFonts.lato(
                     fontSize: 16,
                     color: AppTheme.cream.withValues(alpha: 0.7),
@@ -448,7 +466,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
                 const SizedBox(height: 8),
                 Text(
-                  'Modalità: ${session.gameMode.variantDisplayName ?? "Standard"}',
+                  AppLocalizations.of(context)!.mode(_getGameMode(session).getVariantDisplayName(context) ?? AppLocalizations.of(context)!.variantClassico),
                   style: GoogleFonts.lato(
                     fontSize: 14,
                     color: AppTheme.gold.withValues(alpha: 0.7),
@@ -458,9 +476,9 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 const SizedBox(height: 32),
                 if (isAdmin)
                   ElevatedButton.icon(
-                    onPressed: () => _startNewHand(session),
+                    onPressed: () => _startNewHand(session, _getGameMode(session).variantId),
                     icon: const Icon(Icons.play_arrow),
-                    label: const Text('Inizia Mano'),
+                    label: Text(AppLocalizations.of(context)!.startHand),
                   ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
               ],
             ),
@@ -526,7 +544,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
               ).animate().fadeIn(duration: 400.ms).scale(),
               const SizedBox(height: 24),
               Text(
-                'In attesa dell\'admin',
+                AppLocalizations.of(context)!.waitingForAdmin,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -535,7 +553,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
               ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
               const SizedBox(height: 12),
               Text(
-                'L\'amministratore sta impostando l\'ordine dei giocatori...',
+                AppLocalizations.of(context)!.waitingAdminSetOrder,
                 style: GoogleFonts.lato(
                   fontSize: 14,
                   color: AppTheme.cream.withValues(alpha: 0.7),
@@ -561,7 +579,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 .scale(),
             const SizedBox(height: 16),
             Text(
-              'Ordine dei Giocatori',
+              AppLocalizations.of(context)!.setPlayerOrder,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -570,7 +588,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
             ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 8),
             Text(
-              'Trascina i giocatori per impostare l\'ordine del mazzo.\nIl primo sarà il mazziere iniziale.',
+              AppLocalizations.of(context)!.dragPlayersToSetOrder,
               style: GoogleFonts.lato(
                 fontSize: 14,
                 color: AppTheme.cream.withValues(alpha: 0.7),
@@ -589,7 +607,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                         const Icon(Icons.swap_vert, color: AppTheme.gold),
                         const SizedBox(width: 8),
                         Text(
-                          'Ordine di gioco',
+                          AppLocalizations.of(context)!.playOrder,
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -672,7 +690,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          'Mazziere',
+                                          AppLocalizations.of(context)!.dealer,
                                           style: GoogleFonts.lato(
                                             fontSize: 10,
                                             color: AppTheme.darkGreen,
@@ -703,7 +721,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
             ElevatedButton.icon(
               onPressed: () => _confirmPlayerOrder(session, hand),
               icon: const Icon(Icons.check),
-              label: const Text('Conferma Ordine'),
+              label: Text(AppLocalizations.of(context)!.confirmOrder),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 backgroundColor: AppTheme.gold,
@@ -735,7 +753,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
               ).animate().fadeIn(duration: 400.ms).scale(),
               const SizedBox(height: 24),
               Text(
-                'In attesa dell\'admin',
+                AppLocalizations.of(context)!.waitingForAdmin,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -744,7 +762,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
               ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
               const SizedBox(height: 12),
               Text(
-                'L\'amministratore sta impostando la quota del mazziere...',
+                AppLocalizations.of(context)!.waitingAdminSetQuota,
                 style: GoogleFonts.lato(
                   fontSize: 14,
                   color: AppTheme.cream.withValues(alpha: 0.7),
@@ -774,7 +792,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
             ).animate().fadeIn(duration: 400.ms).scale(),
             const SizedBox(height: 24),
             Text(
-              'Imposta la Quota',
+              AppLocalizations.of(context)!.setQuota,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -783,7 +801,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
             ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 12),
             Text(
-              'Quanto deve essere la puntata del mazziere?',
+              AppLocalizations.of(context)!.whatShouldDealerBet,
               style: GoogleFonts.lato(
                 fontSize: 14,
                 color: AppTheme.cream.withValues(alpha: 0.7),
@@ -820,6 +838,8 @@ class _BestiaScreenState extends State<BestiaScreen> {
                         border: InputBorder.none,
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    AmountKeypad(controller: _baseValueController),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
@@ -832,16 +852,15 @@ class _BestiaScreenState extends State<BestiaScreen> {
                             _setupBestiaBase(session, hand, amount);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Inserisci un importo valido maggiore di 0'),
+                              SnackBar(
+                                content: Text(AppLocalizations.of(context)!.enterValidAmountGreaterThan0),
                                 backgroundColor: AppTheme.accentRed,
                               ),
                             );
                           }
                         },
                         icon: const Icon(Icons.check),
-                        label: const Text('Conferma Quota'),
+                        label: Text(AppLocalizations.of(context)!.confirmQuota),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
@@ -880,7 +899,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
             ).animate().fadeIn(duration: 400.ms).scale(),
             const SizedBox(height: 24),
             Text(
-              isDealer ? 'Sei tu il mazziere!' : 'Mazziere: ${dealerPlayer?.name ?? "..."}',
+              isDealer ? AppLocalizations.of(context)!.dealerBetPhase : '${AppLocalizations.of(context)!.dealer}: ${dealerPlayer?.name ?? "..."}',
               style: GoogleFonts.playfairDisplay(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -890,8 +909,8 @@ class _BestiaScreenState extends State<BestiaScreen> {
             const SizedBox(height: 12),
             Text(
               isDealer 
-                  ? 'Devi mettere ${_currencyFormat.format(hand.bestiaBaseValue)} nel piatto.'
-                  : 'Attendi che ${dealerPlayer?.name ?? "il mazziere"} metta la quota...',
+                  ? AppLocalizations.of(context)!.dealerMustPayQuota(_currencyFormat.format(hand.bestiaBaseValue))
+                  : AppLocalizations.of(context)!.waitDealerPays(dealerPlayer?.name ?? AppLocalizations.of(context)!.dealer),
               style: GoogleFonts.lato(
                 fontSize: 14,
                 color: AppTheme.cream.withValues(alpha: 0.7),
@@ -903,7 +922,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
               ElevatedButton.icon(
                 onPressed: () => _dealerBet(session, hand),
                 icon: const Icon(Icons.payments),
-                label: Text('Paga ${_currencyFormat.format(hand.bestiaBaseValue)}'),
+                label: Text(AppLocalizations.of(context)!.payQuota(_currencyFormat.format(hand.bestiaBaseValue))),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   backgroundColor: AppTheme.gold,
@@ -936,7 +955,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 .scale(),
             const SizedBox(height: 24),
             Text(
-              'Gioca il round!',
+              AppLocalizations.of(context)!.playTheRound,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -952,7 +971,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                   color: AppTheme.cream.withValues(alpha: 0.7),
                 ),
                 children: [
-                  const TextSpan(text: 'Mazziere: '),
+                  TextSpan(text: '${AppLocalizations.of(context)!.dealer}: '),
                   TextSpan(
                     text: dealerPlayer.name,
                     style: const TextStyle(
@@ -960,7 +979,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                       color: AppTheme.gold,
                     ),
                   ),
-                  const TextSpan(text: '\nOra giocate le carte!'),
+                  TextSpan(text: '\n${AppLocalizations.of(context)!.nowPlayCards}'),
                 ],
               ),
             ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
@@ -972,7 +991,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Piatto: ${_currencyFormat.format(hand.bestiaPot)}',
+                '${AppLocalizations.of(context)!.pot}: ${_currencyFormat.format(hand.bestiaPot)}',
                 style: GoogleFonts.lato(
                   color: AppTheme.gold,
                   fontSize: 24,
@@ -982,7 +1001,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
             ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
             const SizedBox(height: 8),
             Text(
-              'La Bestia continua finché non viene vinta!',
+              AppLocalizations.of(context)!.bestiaContinuesUntilWon,
               style: GoogleFonts.lato(
                 fontSize: 12,
                 color: AppTheme.cream.withValues(alpha: 0.5),
@@ -994,7 +1013,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
               ElevatedButton.icon(
                 onPressed: () => _startChoicePhase(session, hand),
                 icon: const Icon(Icons.arrow_forward),
-                label: const Text('Round giocato! Vai alle scelte'),
+                label: Text(AppLocalizations.of(context)!.roundPlayed),
                 style: ElevatedButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -1006,12 +1025,98 @@ class _BestiaScreenState extends State<BestiaScreen> {
     );
   }
 
+  /// Calcola quante quote sono già state prese dagli altri giocatori
+  int _getQuotesTakenByOthers(ActiveHand hand, String? myPlayerId) {
+    int total = 0;
+    for (final entry in hand.bestiaPlayerChoice.entries) {
+      if (entry.key != myPlayerId && entry.value.startsWith('take')) {
+        final num = int.tryParse(entry.value.replaceAll('take', '')) ?? 0;
+        total += num;
+      }
+    }
+    return total;
+  }
+
+  /// Calcola quante quote totali sono state prese
+  int _getTotalQuotesTaken(ActiveHand hand) {
+    int total = 0;
+    for (final entry in hand.bestiaPlayerChoice.entries) {
+      if (entry.value.startsWith('take')) {
+        final num = int.tryParse(entry.value.replaceAll('take', '')) ?? 0;
+        total += num;
+      }
+    }
+    return total;
+  }
+
+  /// Calcola quanti giocatori devono ancora scegliere (escluso me)
+  int _getPlayersWaitingCount(ActiveHand hand, String? myPlayerId) {
+    int waiting = 0;
+    for (final playerId in hand.playerOrder) {
+      if (playerId != myPlayerId && !hand.bestiaPlayerChoice.containsKey(playerId)) {
+        waiting++;
+      }
+    }
+    return waiting;
+  }
+
+  /// Calcola quante quote devo prendere obbligatoriamente
+  /// Sono l'ultimo a scegliere e ci sono quote non assegnate
+  int _getForcedQuotes(ActiveHand hand, String? myPlayerId) {
+    if (myPlayerId == null) return 0;
+    
+    // Quanti giocatori devono ancora scegliere (escluso me)
+    final waitingCount = _getPlayersWaitingCount(hand, myPlayerId);
+    
+    // Se ci sono ancora altri giocatori che devono scegliere, non sono forzato
+    if (waitingCount > 0) return 0;
+    
+    // Sono l'ultimo a scegliere - calcola le quote rimanenti
+    final quotesTaken = _getQuotesTakenByOthers(hand, myPlayerId);
+    final remainingQuotes = 3 - quotesTaken;
+    
+    // Se tutte e 3 le quote sono state prese, non devo prendere niente
+    if (remainingQuotes <= 0) return 0;
+    
+    // Sono l'ultimo e ci sono quote rimanenti: DEVO prenderle tutte
+    return remainingQuotes;
+  }
+
+  /// Resetta la scelta di un giocatore (solo admin)
+  Future<void> _resetPlayerChoice(GameSession session, ActiveHand hand, String playerId) async {
+    final dbService = context.read<DatabaseService>();
+    
+    final newChoices = Map<String, String>.from(hand.bestiaPlayerChoice);
+    newChoices.remove(playerId);
+    
+    final newHand = hand.copyWith(
+      bestiaPlayerChoice: newChoices,
+    );
+    
+    await dbService.updateActiveHand(sessionId: session.id, hand: newHand);
+    
+    if (mounted) {
+      final player = _getPlayerById(session, playerId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.choiceCancelled(player.name)),
+          backgroundColor: AppTheme.gold,
+        ),
+      );
+    }
+  }
+
   Widget _buildChoicePhaseView(
       GameSession session, ActiveHand hand, bool isAdmin) {
     final myPlayer = _getCurrentUserPlayer(session);
     final myChoice =
         myPlayer != null ? hand.bestiaPlayerChoice[myPlayer.id] : null;
     final hasChosen = myChoice != null;
+    
+    // Calcola quote disponibili
+    final quotesTakenByOthers = _getQuotesTakenByOthers(hand, myPlayer?.id);
+    final availableQuotes = 3 - quotesTakenByOthers;
+    final forcedQuotes = _getForcedQuotes(hand, myPlayer?.id);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -1026,7 +1131,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
               child: Column(
                 children: [
                   Text(
-                    'Piatto attuale',
+                    AppLocalizations.of(context)!.currentPot,
                     style: GoogleFonts.lato(
                       color: AppTheme.cream.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -1041,7 +1146,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Visualizzazione delle 3 quote
+                  // Visualizzazione delle 3 quote con stato
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -1050,17 +1155,35 @@ class _BestiaScreenState extends State<BestiaScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppTheme.darkGreen.withValues(alpha: 0.5),
+                            color: i < quotesTakenByOthers 
+                                ? Colors.green.withValues(alpha: 0.3)
+                                : AppTheme.darkGreen.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.gold.withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            _currencyFormat.format(hand.bestiaPot / 3),
-                            style: GoogleFonts.lato(
-                              color: AppTheme.gold,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                            border: Border.all(
+                              color: i < quotesTakenByOthers 
+                                  ? Colors.green.withValues(alpha: 0.7)
+                                  : AppTheme.gold.withValues(alpha: 0.3),
                             ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (i < quotesTakenByOthers)
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 4),
+                                  child: Icon(Icons.check, color: Colors.green, size: 14),
+                                ),
+                              Text(
+                                _currencyFormat.format(hand.bestiaPot / 3),
+                                style: GoogleFonts.lato(
+                                  color: i < quotesTakenByOthers 
+                                      ? Colors.green 
+                                      : AppTheme.gold,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -1068,15 +1191,20 @@ class _BestiaScreenState extends State<BestiaScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '3 quote da vincere',
+                    quotesTakenByOthers > 0 
+                        ? '$availableQuotes ${availableQuotes == 1 ? "quota disponibile" : "quote disponibili"}'
+                        : '3 quote da vincere',
                     style: GoogleFonts.lato(
-                      color: AppTheme.cream.withValues(alpha: 0.5),
+                      color: availableQuotes < 3 
+                          ? Colors.orange 
+                          : AppTheme.cream.withValues(alpha: 0.5),
                       fontSize: 11,
+                      fontWeight: availableQuotes < 3 ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Quota mazziere: ${_currencyFormat.format(hand.bestiaBaseValue)}',
+                    '${AppLocalizations.of(context)!.dealerQuota}: ${_currencyFormat.format(hand.bestiaBaseValue)}',
                     style: GoogleFonts.lato(
                       color: AppTheme.cream.withValues(alpha: 0.7),
                       fontSize: 14,
@@ -1096,13 +1224,29 @@ class _BestiaScreenState extends State<BestiaScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Scelte dei giocatori',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.gold,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context)!.playerChoices,
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.gold,
+                          ),
+                        ),
+                      ),
+                      if (isAdmin && hand.bestiaPlayerChoice.isNotEmpty)
+                        TextButton.icon(
+                          onPressed: () => _showResetChoicesDialog(session, hand),
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: Text(AppLocalizations.of(context)!.edit),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.orange,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   ...hand.playerOrder.map((playerId) {
@@ -1172,7 +1316,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          'Mazziere',
+                                          AppLocalizations.of(context)!.dealer,
                                           style: GoogleFonts.lato(
                                             fontSize: 10,
                                             color: AppTheme.gold,
@@ -1185,7 +1329,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                                 ),
                                 if (choice != null)
                                   Text(
-                                    _getChoiceDisplayText(choice),
+                                    _getChoiceDisplayText(context, choice),
                                     style: GoogleFonts.lato(
                                       color: _getChoiceColor(choice),
                                       fontSize: 12,
@@ -1197,7 +1341,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                           ),
                           if (choice == null)
                             Text(
-                              'In attesa',
+                              AppLocalizations.of(context)!.waiting,
                               style: GoogleFonts.lato(
                                 color: AppTheme.cream.withValues(alpha: 0.5),
                                 fontSize: 12,
@@ -1216,69 +1360,161 @@ class _BestiaScreenState extends State<BestiaScreen> {
 
           // Le mie scelte
           if (myPlayer != null && !hasChosen) ...[
-            Text(
-              'Cosa vuoi fare?',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.gold,
+            // Caso speciale: sono forzato a prendere le quote rimanenti
+            if (forcedQuotes > 0) ...[
+              Card(
+                color: Colors.orange.withValues(alpha: 0.2),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.warning_amber, color: Colors.orange, size: 40),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppLocalizations.of(context)!.mustTakeRemainingQuotes,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        AppLocalizations.of(context)!.allOthersOutOrPaid(forcedQuotes),
+                        style: GoogleFonts.lato(
+                          color: AppTheme.cream.withValues(alpha: 0.7),
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => _makeChoice(session, hand, 'take$forcedQuotes'),
+                        icon: const Icon(Icons.check),
+                        label: Text(
+                          AppLocalizations.of(context)!.takeQuotesAmount(forcedQuotes, _currencyFormat.format((hand.bestiaPot / 3) * forcedQuotes)),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-
-            // Uscire dal gioco
-            _buildChoiceButton(
-              session,
-              hand,
-              'out',
-              'Esco dal gioco',
-              Icons.exit_to_app,
-              AppTheme.cream,
-              'Non partecipi alla distribuzione',
-            ),
-
-            const SizedBox(height: 12),
-
-            // Paga la bestia
-            _buildChoiceButton(
-              session,
-              hand,
-              'pay',
-              'Pago la Bestia',
-              Icons.payments,
-              AppTheme.accentRed,
-              'Paghi ${_currencyFormat.format(hand.bestiaPot)} nel nuovo piatto',
-            ),
-
-            const SizedBox(height: 12),
-
-            // Prendi quote
-            Text(
-              'Oppure prendi delle quote:',
-              style: GoogleFonts.lato(
-                color: AppTheme.cream.withValues(alpha: 0.7),
-                fontSize: 14,
+            ] else if (availableQuotes <= 0) ...[
+              // Tutte le quote sono state prese - posso solo uscire o pagare
+              Text(
+                AppLocalizations.of(context)!.allQuotesTaken,
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)!.canOnlyExitOrPay,
+                style: GoogleFonts.lato(
+                  color: AppTheme.cream.withValues(alpha: 0.7),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
 
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuoteButton(session, hand, 1),
+              // Uscire dal gioco
+              _buildChoiceButton(
+                session,
+                hand,
+                'out',
+                AppLocalizations.of(context)!.exitGame,
+                Icons.exit_to_app,
+                AppTheme.cream,
+                AppLocalizations.of(context)!.dontParticipate,
+              ),
+
+              const SizedBox(height: 12),
+
+              // Paga la bestia
+              _buildChoiceButton(
+                session,
+                hand,
+                'pay',
+                AppLocalizations.of(context)!.payBestia,
+                Icons.payments,
+                AppTheme.accentRed,
+                AppLocalizations.of(context)!.payInNewPot(_currencyFormat.format(hand.bestiaPot)),
+              ),
+            ] else ...[
+              // Caso normale - mostra tutte le opzioni disponibili
+              Text(
+                AppLocalizations.of(context)!.whatDoYouWant,
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.gold,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildQuoteButton(session, hand, 2),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              // Uscire dal gioco
+              _buildChoiceButton(
+                session,
+                hand,
+                'out',
+                AppLocalizations.of(context)!.exitGame,
+                Icons.exit_to_app,
+                AppTheme.cream,
+                AppLocalizations.of(context)!.dontParticipate,
+              ),
+
+              const SizedBox(height: 12),
+
+              // Paga la bestia
+              _buildChoiceButton(
+                session,
+                hand,
+                'pay',
+                AppLocalizations.of(context)!.payBestia,
+                Icons.payments,
+                AppTheme.accentRed,
+                AppLocalizations.of(context)!.payInNewPot(_currencyFormat.format(hand.bestiaPot)),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Prendi quote
+              Text(
+                availableQuotes < 3 
+                    ? AppLocalizations.of(context)!.takeQuotesMax(availableQuotes)
+                    : AppLocalizations.of(context)!.orTakeQuotes,
+                style: GoogleFonts.lato(
+                  color: AppTheme.cream.withValues(alpha: 0.7),
+                  fontSize: 14,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildQuoteButton(session, hand, 3),
-                ),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  for (int i = 1; i <= 3; i++) ...[
+                    if (i > 1) const SizedBox(width: 8),
+                    Expanded(
+                      child: i <= availableQuotes
+                          ? _buildQuoteButton(session, hand, i)
+                          : _buildDisabledQuoteButton(i),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ] else if (hasChosen)
             Card(
               color: AppTheme.gold.withValues(alpha: 0.2),
@@ -1289,13 +1525,13 @@ class _BestiaScreenState extends State<BestiaScreen> {
                     const Icon(Icons.check_circle, color: AppTheme.gold, size: 40),
                     const SizedBox(height: 12),
                     Text(
-                      'Hai scelto:',
+                      AppLocalizations.of(context)!.youChose,
                       style: GoogleFonts.lato(
                         color: AppTheme.cream.withValues(alpha: 0.7),
                       ),
                     ),
                     Text(
-                      _getChoiceDisplayText(myChoice),
+                      _getChoiceDisplayText(context, myChoice),
                       style: GoogleFonts.playfairDisplay(
                         color: _getChoiceColor(myChoice),
                         fontSize: 20,
@@ -1304,7 +1540,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Attendi che tutti scelgano...',
+                      AppLocalizations.of(context)!.waitForOthers,
                       style: GoogleFonts.lato(
                         color: AppTheme.cream.withValues(alpha: 0.5),
                         fontStyle: FontStyle.italic,
@@ -1314,6 +1550,46 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// Pulsante quota disabilitato (quando le quote non sono disponibili)
+  Widget _buildDisabledQuoteButton(int quotes) {
+    return OutlinedButton(
+      onPressed: null,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppTheme.cream.withValues(alpha: 0.3),
+        side: BorderSide(color: AppTheme.cream.withValues(alpha: 0.2)),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$quotes',
+            style: GoogleFonts.playfairDisplay(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: AppTheme.cream.withValues(alpha: 0.3),
+            ),
+          ),
+          Text(
+            quotes == 1 ? 'quota' : 'quote',
+            style: GoogleFonts.lato(
+              fontSize: 10,
+              color: AppTheme.cream.withValues(alpha: 0.3),
+            ),
+          ),
+          Text(
+            'N/D',
+            style: GoogleFonts.lato(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.cream.withValues(alpha: 0.3),
+            ),
+          ),
         ],
       ),
     );
@@ -1423,61 +1699,119 @@ class _BestiaScreenState extends State<BestiaScreen> {
     
     // Il nuovo piatto = somma di chi paga la bestia (ognuno paga il valore del piatto corrente)
     final projectedNewPot = currentPot * payingPlayers.length;
+    
+    // Validazione: le quote totali devono essere esattamente 3
+    final totalQuotesTaken = _getTotalQuotesTaken(hand);
+    final hasValidQuotes = totalQuotesTaken == 3;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Errore: quote non valide
+          if (!hasValidQuotes) ...[
+            Card(
+              color: AppTheme.accentRed.withValues(alpha: 0.3),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    const Icon(Icons.error_outline, color: AppTheme.accentRed, size: 50),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Errore nelle scelte!',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.accentRed,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Le quote assegnate sono $totalQuotesTaken su 3.\nDevono essere esattamente 3 quote.',
+                      style: GoogleFonts.lato(
+                        color: AppTheme.cream,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    if (isAdmin)
+                      ElevatedButton.icon(
+                        onPressed: () => _showResetChoicesDialog(session, hand),
+                        icon: const Icon(Icons.edit),
+                        label: Text(AppLocalizations.of(context)!.modifyChoices),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(duration: 300.ms).shake(),
+            const SizedBox(height: 16),
+          ],
+          
           // Riepilogo
           Card(
-            color: willContinue 
-                ? AppTheme.accentRed.withValues(alpha: 0.15)
-                : AppTheme.gold.withValues(alpha: 0.15),
+            color: !hasValidQuotes 
+                ? AppTheme.cream.withValues(alpha: 0.1)
+                : willContinue 
+                    ? AppTheme.accentRed.withValues(alpha: 0.15)
+                    : AppTheme.gold.withValues(alpha: 0.15),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text(willContinue ? '🔥' : '🏆', style: const TextStyle(fontSize: 40)),
+                  Text(
+                    !hasValidQuotes ? '⚠️' : (willContinue ? '🔥' : '🏆'), 
+                    style: const TextStyle(fontSize: 40),
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    willContinue 
-                        ? 'La Bestia continua!' 
-                        : 'La Bestia è caduta!',
+                    !hasValidQuotes 
+                        ? AppLocalizations.of(context)!.choicesToFix
+                        : willContinue 
+                            ? AppLocalizations.of(context)!.bestiaContinues
+                            : AppLocalizations.of(context)!.bestiaFallen,
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: willContinue ? AppTheme.accentRed : AppTheme.gold,
+                      color: !hasValidQuotes 
+                          ? Colors.orange 
+                          : willContinue ? AppTheme.accentRed : AppTheme.gold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   // Piatto corrente distribuito ai vincitori
                   Text(
-                    'Piatto distribuito: ${_currencyFormat.format(currentPot)}',
+                    AppLocalizations.of(context)!.potDistributed(_currencyFormat.format(currentPot)),
                     style: GoogleFonts.lato(
                       color: AppTheme.gold,
                       fontSize: 16,
                     ),
                   ),
                   Text(
-                    '(3 quote da ${_currencyFormat.format(quoteValue)})',
+                    AppLocalizations.of(context)!.quotesOf(_currencyFormat.format(quoteValue)),
                     style: GoogleFonts.lato(
                       color: AppTheme.cream.withValues(alpha: 0.5),
                       fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  if (willContinue) ...[
+                  if (hasValidQuotes && willContinue) ...[
                     const Divider(color: AppTheme.cream, height: 20),
                     Text(
-                      '${payingPlayers.length} ${payingPlayers.length == 1 ? "giocatore paga" : "giocatori pagano"} la Bestia',
+                      AppLocalizations.of(context)!.playersPayBestia(payingPlayers.length),
                       style: GoogleFonts.lato(
                         color: AppTheme.cream.withValues(alpha: 0.7),
                         fontSize: 14,
                       ),
                     ),
                     Text(
-                      'Ogni pagamento: ${_currencyFormat.format(currentPot)}',
+                      AppLocalizations.of(context)!.eachPayment(_currencyFormat.format(currentPot)),
                       style: GoogleFonts.lato(
                         color: AppTheme.cream.withValues(alpha: 0.5),
                         fontSize: 12,
@@ -1485,7 +1819,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Nuovo piatto: ${_currencyFormat.format(projectedNewPot)} + quota mazziere',
+                      AppLocalizations.of(context)!.newPot(_currencyFormat.format(projectedNewPot)),
                       style: GoogleFonts.lato(
                         color: AppTheme.accentRed,
                         fontSize: 18,
@@ -1508,7 +1842,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Riepilogo scelte',
+                    AppLocalizations.of(context)!.choicesSummary,
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1555,7 +1889,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
-                                      'Mazziere',
+                                      AppLocalizations.of(context)!.dealer,
                                       style: GoogleFonts.lato(
                                         fontSize: 10,
                                         color: AppTheme.gold,
@@ -1578,7 +1912,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  _getChoiceDisplayText(choice),
+                                  _getChoiceDisplayText(context, choice),
                                   style: GoogleFonts.lato(
                                     color: _getChoiceColor(choice),
                                     fontWeight: FontWeight.bold,
@@ -1619,20 +1953,46 @@ class _BestiaScreenState extends State<BestiaScreen> {
 
           const SizedBox(height: 24),
 
-          if (isAdmin)
+          if (isAdmin) ...[
+            // Pulsante modifica scelte (sempre visibile per admin)
+            if (hasValidQuotes)
+              OutlinedButton.icon(
+                onPressed: () => _showResetChoicesDialog(session, hand),
+                icon: const Icon(Icons.edit, size: 18),
+                label: Text(AppLocalizations.of(context)!.modifyChoices),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                  side: const BorderSide(color: Colors.orange),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            const SizedBox(height: 12),
+            // Pulsante conferma (disabilitato se le quote non sono valide)
             ElevatedButton.icon(
-              onPressed: () => _finalizeRound(session, hand),
-              icon: Icon(willContinue ? Icons.replay : Icons.check_circle),
-              label: Text(willContinue 
-                  ? 'Conferma e Continua' 
-                  : 'Conferma e Chiudi Bestia'),
+              onPressed: hasValidQuotes ? () => _finalizeRound(session, hand) : null,
+              icon: Icon(
+                !hasValidQuotes 
+                    ? Icons.block 
+                    : willContinue ? Icons.replay : Icons.check_circle,
+              ),
+              label: Text(
+                !hasValidQuotes 
+                    ? AppLocalizations.of(context)!.fixChoicesBeforeConfirm
+                    : willContinue 
+                        ? AppLocalizations.of(context)!.confirmAndContinue
+                        : AppLocalizations.of(context)!.confirmAndCloseBestia,
+              ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: willContinue ? AppTheme.accentRed : AppTheme.gold,
-                foregroundColor: willContinue ? AppTheme.cream : AppTheme.darkGreen,
+                backgroundColor: !hasValidQuotes 
+                    ? AppTheme.cream.withValues(alpha: 0.3)
+                    : willContinue ? AppTheme.accentRed : AppTheme.gold,
+                foregroundColor: !hasValidQuotes 
+                    ? AppTheme.cream.withValues(alpha: 0.5)
+                    : willContinue ? AppTheme.cream : AppTheme.darkGreen,
               ),
-            )
-          else
+            ),
+          ] else
             Card(
               color: Colors.blue.withValues(alpha: 0.1),
               child: Padding(
@@ -1643,7 +2003,7 @@ class _BestiaScreenState extends State<BestiaScreen> {
                     const Icon(Icons.hourglass_empty, color: Colors.blue),
                     const SizedBox(width: 12),
                     Text(
-                      'Attendi che l\'admin confermi...',
+                      AppLocalizations.of(context)!.waitAdminConfirm,
                       style: GoogleFonts.lato(color: Colors.blue),
                     ),
                   ],
@@ -1655,18 +2015,19 @@ class _BestiaScreenState extends State<BestiaScreen> {
     );
   }
 
-  String _getChoiceDisplayText(String choice) {
+  String _getChoiceDisplayText(BuildContext context, String choice) {
+    final l10n = AppLocalizations.of(context)!;
     switch (choice) {
       case 'out':
-        return 'Esce';
+        return l10n.exits;
       case 'pay':
-        return 'Paga la Bestia';
+        return l10n.paysBestia;
       case 'take1':
-        return 'Prende 1 quota';
+        return l10n.takes1Quote;
       case 'take2':
-        return 'Prende 2 quote';
+        return l10n.takes2Quotes;
       case 'take3':
-        return 'Prende 3 quote';
+        return l10n.takes3Quotes;
       default:
         return choice;
     }
@@ -1687,10 +2048,94 @@ class _BestiaScreenState extends State<BestiaScreen> {
     }
   }
 
-  void _showCancelHandDialog(GameSession session, ActiveHand hand) {
+  void _showResetChoicesDialog(GameSession session, ActiveHand hand) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.primaryGreen,
+        title: Row(
+          children: [
+            const Icon(Icons.edit, color: Colors.orange),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)!.modifyChoices,
+                style: GoogleFonts.playfairDisplay(color: Colors.orange),
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.selectPlayerToResetChoice,
+                style: GoogleFonts.lato(color: AppTheme.cream),
+              ),
+              const SizedBox(height: 16),
+              ...hand.bestiaPlayerChoice.entries.map((entry) {
+                final player = _getPlayerById(session, entry.key);
+                final choice = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: AppTheme.gold.withValues(alpha: 0.3)),
+                    ),
+                    tileColor: AppTheme.darkGreen.withValues(alpha: 0.5),
+                    leading: CircleAvatar(
+                      backgroundColor: _getChoiceColor(choice).withValues(alpha: 0.2),
+                      child: Text(
+                        player.name[0].toUpperCase(),
+                        style: GoogleFonts.lato(
+                          color: _getChoiceColor(choice),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      player.name,
+                      style: GoogleFonts.lato(color: AppTheme.cream),
+                    ),
+                    subtitle: Text(
+                      _getChoiceDisplayText(context, choice),
+                      style: GoogleFonts.lato(
+                        color: _getChoiceColor(choice),
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.undo, color: Colors.orange),
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        _resetPlayerChoice(session, hand, entry.key);
+                      },
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(AppLocalizations.of(context)!.close, style: GoogleFonts.lato(color: AppTheme.cream)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelHandDialog(GameSession session, ActiveHand hand) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Row(
           children: [
@@ -1698,31 +2143,31 @@ class _BestiaScreenState extends State<BestiaScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Annullare la mano?',
+                l10n.cancelHandQuestion,
                 style: GoogleFonts.playfairDisplay(color: AppTheme.accentRed),
               ),
             ),
           ],
         ),
         content: Text(
-          'Questa azione annullerà la mano corrente e TUTTI i movimenti economici effettuati durante questa mano verranno eliminati.\n\nLa situazione economica tornerà allo stato precedente.',
+          l10n.cancelHandWarning,
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child:
-                Text('No, mantieni', style: GoogleFonts.lato(color: AppTheme.cream)),
+                Text(l10n.noKeepIt, style: GoogleFonts.lato(color: AppTheme.cream)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               _cancelHand(session, hand);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentRed,
             ),
-            child: const Text('Sì, annulla mano'),
+            child: Text(l10n.yesCancelHand),
           ),
         ],
       ),

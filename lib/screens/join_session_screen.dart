@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
@@ -55,8 +56,9 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
   }
 
   Future<void> _joinSession() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_codeController.text.trim().isEmpty) {
-      _showError('Inserisci il codice della sessione');
+      _showError(l10n.enterSessionCode);
       return;
     }
     
@@ -70,7 +72,7 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
     
     // Altrimenti è un codice sessione normale
     if (_nicknameController.text.trim().isEmpty) {
-      _showError('Inserisci il tuo nickname');
+      _showError(l10n.enterYourNickname);
       return;
     }
 
@@ -89,12 +91,12 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
       final session = await dbService.getSessionByShareCode(code);
       
       if (session == null) {
-        _showError('Sessione non trovata');
+        _showError(l10n.sessionNotFound);
         return;
       }
       
       if (!session.isActive) {
-        _showError('Questa sessione è stata chiusa');
+        _showError(l10n.sessionClosed);
         return;
       }
       
@@ -105,16 +107,19 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
       );
       
       if (nicknameExists) {
-        _showError('Esiste già un giocatore con questo nickname. Scegli un nome diverso o usa un codice invito personale.');
+        _showError(l10n.nicknameExists);
         return;
       }
       
       // Crea SEMPRE un nuovo giocatore (con un nuovo userId)
-      final userId = authService.currentUser?.uid;
+      final user = authService.currentUser;
+      final userId = user?.uid;
+      final isUserLoggedIn = user != null && !user.isAnonymous;
       await dbService.joinSession(
         sessionId: session.id,
         playerName: nickname,
         userId: userId,
+        isUserLoggedIn: isUserLoggedIn,
       );
 
       if (mounted) {
@@ -133,6 +138,7 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
   }
 
   Future<void> _joinAsExistingPlayer(String joinCode) async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
 
     try {
@@ -148,7 +154,7 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
       final result = await dbService.getSessionByPlayerJoinCode(joinCode);
       
       if (result == null) {
-        _showError('Codice invito non valido o già utilizzato');
+        _showError(l10n.inviteCodeInvalid);
         return;
       }
       
@@ -156,23 +162,26 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
       final player = result.player;
       
       if (!session.isActive) {
-        _showError('Questa sessione è stata chiusa');
+        _showError(l10n.sessionClosed);
         return;
       }
       
-      final userId = authService.currentUser?.uid;
+      final user = authService.currentUser;
+      final userId = user?.uid;
+      final isUserLoggedIn = user != null && !user.isAnonymous;
       
       // Collega l'utente al giocatore esistente (sostituisce qualsiasi associazione precedente)
       await dbService.linkUserToPlayer(
         sessionId: session.id,
         player: player,
         userId: userId!,
+        isUserLoggedIn: isUserLoggedIn,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Benvenuto ${player.name}!'),
+            content: Text(l10n.welcomePlayer(player.name)),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
@@ -201,9 +210,10 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Unisciti'),
+        title: Text(l10n.joinTitle),
       ),
       body: ChristmasBackground(
         child: SafeArea(
@@ -223,7 +233,7 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
                 const SizedBox(height: 24),
                 
                 Text(
-                  'Unisciti ad una\nsessione esistente',
+                  l10n.joinExistingSession,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -253,8 +263,8 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
                           textCapitalization: TextCapitalization.characters,
                           textAlign: TextAlign.center,
                           decoration: InputDecoration(
-                            labelText: _isPlayerInviteCode ? 'Codice invito giocatore' : 'Codice sessione',
-                            hintText: 'ABC12345 o PXXXXXX',
+                            labelText: _isPlayerInviteCode ? l10n.playerInviteCode : l10n.sessionCode,
+                            hintText: l10n.sessionCodeHint,
                             prefixIcon: Icon(
                               _isPlayerInviteCode ? Icons.person_add : Icons.key,
                               color: AppTheme.gold,
@@ -277,7 +287,7 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Hai inserito un codice invito personale. Entrerai direttamente con il nome già assegnato.',
+                                    l10n.personalInviteCodeInfo,
                                     style: GoogleFonts.lato(
                                       color: AppTheme.gold,
                                       fontSize: 12,
@@ -294,10 +304,10 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
                             controller: _nicknameController,
                             style: GoogleFonts.lato(color: AppTheme.cream),
                             textCapitalization: TextCapitalization.words,
-                            decoration: const InputDecoration(
-                              labelText: 'Il tuo nickname',
-                              hintText: 'Come vuoi essere chiamato',
-                              prefixIcon: Icon(Icons.person, color: AppTheme.gold),
+                            decoration: InputDecoration(
+                              labelText: l10n.yourNickname,
+                              hintText: l10n.howYouWantToBeCalled,
+                              prefixIcon: const Icon(Icons.person, color: AppTheme.gold),
                             ),
                           ),
                         ],
@@ -317,10 +327,10 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
                                 )
                               : Icon(_isPlayerInviteCode ? Icons.person_add : Icons.login),
                           label: Text(_isLoading 
-                              ? 'Accesso...' 
+                              ? l10n.joining 
                               : _isPlayerInviteCode 
-                                  ? 'Collega al Giocatore' 
-                                  : 'Entra nella Sessione'),
+                                  ? l10n.linkToPlayer 
+                                  : l10n.enterSession),
                         ),
                       ],
                     ),
@@ -332,7 +342,7 @@ class _JoinSessionScreenState extends State<JoinSessionScreen> {
                 const SizedBox(height: 24),
                 
                 Text(
-                  'Chiedi al creatore della sessione\nil codice di invito',
+                  l10n.askCreatorForCode,
                   style: GoogleFonts.lato(
                     fontSize: 14,
                     color: AppTheme.cream.withValues(alpha: 0.5),

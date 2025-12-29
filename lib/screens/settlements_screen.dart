@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../services/debt_solver_service.dart';
 import '../theme/app_theme.dart';
@@ -13,13 +14,14 @@ class SettlementsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final debtSolver = DebtSolverService();
     final settlements = debtSolver.calculateSettlements(session);
     final currencyFormat = NumberFormat.currency(locale: 'it_IT', symbol: '€');
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Saldo Debiti'),
+        title: Text(l10n.settleDebts),
       ),
       body: ChristmasBackground(
         child: SafeArea(
@@ -48,7 +50,7 @@ class SettlementsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Soluzione Ottimale',
+                      l10n.optimalSolution,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -57,7 +59,7 @@ class SettlementsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Questi sono i trasferimenti minimi\nper saldare tutti i debiti',
+                      l10n.minTransfersToSettle,
                       style: GoogleFonts.lato(
                         fontSize: 14,
                         color: AppTheme.cream.withValues(alpha: 0.6),
@@ -84,7 +86,7 @@ class SettlementsScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Tutto a posto!',
+                              l10n.allGood,
                               style: GoogleFonts.playfairDisplay(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -93,7 +95,7 @@ class SettlementsScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Non ci sono debiti da saldare',
+                              l10n.noDebtsToSettle,
                               style: GoogleFonts.lato(
                                 fontSize: 14,
                                 color: AppTheme.cream.withValues(alpha: 0.6),
@@ -191,7 +193,7 @@ class SettlementsScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'deve dare a',
+                                          l10n.owesTo,
                                           style: GoogleFonts.lato(
                                             fontSize: 11,
                                             color: AppTheme.cream.withValues(alpha: 0.4),
@@ -226,9 +228,9 @@ class SettlementsScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ).animate(delay: Duration(milliseconds: 100 * index))
-                            .fadeIn(duration: 400.ms)
-                            .slideX(begin: 0.1, end: 0);
+                          ).animate()
+                            .fadeIn(duration: 200.ms)
+                            .slideX(begin: 0.05, end: 0);
                         },
                       ),
               ),
@@ -258,7 +260,7 @@ class SettlementsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '${settlements.length} trasferiment${settlements.length == 1 ? 'o' : 'i'} necessar${settlements.length == 1 ? 'io' : 'i'}',
+                              l10n.transfersNeeded(settlements.length),
                               style: GoogleFonts.lato(
                                 fontSize: 14,
                                 color: AppTheme.cream,

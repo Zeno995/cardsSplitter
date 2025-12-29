@@ -1,0 +1,641 @@
+{
+  "@@locale": "en",
+  "appTitle": "Cards Splitter",
+  "hello": "Hello,",
+  "guest": "Guest",
+  "player": "Player",
+  "logout": "Logout",
+  "login": "Login",
+  "newSession": "New Session",
+  "join": "Join",
+  "yourSessions": "Your sessions",
+  "error": "Error",
+  "noSessionsYet": "No sessions yet",
+  "createNewSessionToStart": "Create a new session to start!",
+  "welcome": "Welcome!",
+  "joinExistingOrLoginToCreate": "Join an existing session or login to create a new one",
+  "admin": "Admin",
+  "participant": "Participant",
+  "playersAndMovements": "{players} players • {movements} movements",
+  "@playersAndMovements": {
+    "placeholders": {
+      "players": {"type": "int"},
+      "movements": {"type": "int"}
+    }
+  },
+  "loginToCreate": "Login to create",
+  "signIn": "Sign In",
+  "signUp": "Sign Up",
+  "manageHolidayCardGames": "Manage your holiday card games",
+  "email": "Email",
+  "password": "Password",
+  "noAccount": "Don't have an account? Sign Up",
+  "haveAccount": "Already have an account? Sign In",
+  "or": "or",
+  "continueWithGoogle": "Continue with Google",
+  "enterEmailAndPassword": "Enter email and password",
+  "newSessionTitle": "New Session",
+  "createNewGameSession": "Create a new\ngame session",
+  "sessionName": "Session name",
+  "sessionNameHint": "e.g. Christmas Bingo 2024",
+  "yourNickname": "Your nickname",
+  "howYouWantToBeCalled": "How you want to be called",
+  "creating": "Creating...",
+  "createSession": "Create Session",
+  "afterCreatingYouCanShare": "After creating you can share\nthe link with your friends",
+  "enterSessionName": "Enter a session name",
+  "enterYourNickname": "Enter your nickname",
+  "creationError": "Creation error: {error}",
+  "@creationError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "joinTitle": "Join",
+  "joinExistingSession": "Join an existing\nsession",
+  "playerInviteCode": "Player invite code",
+  "sessionCode": "Session code",
+  "sessionCodeHint": "ABC12345 or PXXXXXX",
+  "personalInviteCodeInfo": "You entered a personal invite code. You will join directly with the assigned name.",
+  "joining": "Joining...",
+  "linkToPlayer": "Link to Player",
+  "enterSession": "Enter Session",
+  "askCreatorForCode": "Ask the session creator\nfor the invite code",
+  "enterSessionCode": "Enter the session code",
+  "sessionNotFound": "Session not found",
+  "sessionClosed": "This session has been closed",
+  "nicknameExists": "A player with this nickname already exists. Choose a different name or use a personal invite code.",
+  "inviteCodeInvalid": "Invite code invalid or already used",
+  "welcomePlayer": "Welcome {name}!",
+  "@welcomePlayer": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "share": "Share",
+  "deleteSession": "Delete session",
+  "balances": "Balances",
+  "movements": "Movements",
+  "players": "Players",
+  "handInProgress": "Hand in progress: {game}",
+  "@handInProgress": {
+    "placeholders": {
+      "game": {"type": "String"}
+    }
+  },
+  "code": "Code",
+  "codeCopied": "Code copied!",
+  "noPlayers": "No players",
+  "mustReceive": "Must receive",
+  "mustGive": "Must give",
+  "noMovements": "No movements",
+  "deleteMovement": "Delete movement",
+  "deleteMovementConfirm": "Do you want to delete this movement?",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "administrator": "Administrator",
+  "linked": "Linked",
+  "activeInvite": "Active invite",
+  "notLinked": "Not linked",
+  "linkedToAccount": "Linked to an account",
+  "notLinkedToAccount": "Not linked to an account",
+  "viewInviteCode": "View invite code",
+  "generateInviteCode": "Generate invite code",
+  "generateCodeToLetSomeoneJoin": "Generate a code to let someone join as this player",
+  "generateCodeToReplace": "Generate a code to let someone replace this player",
+  "deletePlayer": "Delete player",
+  "alsoRemovesMovements": "Also removes all associated movements",
+  "deletePlayerConfirm": "Do you want to delete \"{name}\" from the session?",
+  "@deletePlayerConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "warningMovementsDeleted": "WARNING: All movements involving this player (both incoming and outgoing) will be permanently deleted.",
+  "inviteCodeGenerated": "Invite Code Generated",
+  "shareCodeToJoinAs": "Share this code to let someone join directly as \"{name}\":",
+  "@shareCodeToJoinAs": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "codeUserEntersAsPlayer": "Whoever uses this code will automatically join as this player without choosing a nickname.",
+  "close": "Close",
+  "activeInviteCode": "Active Invite Code",
+  "codeToJoinAs": "Code to join as \"{name}\":",
+  "@codeToJoinAs": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "invalidateCode": "Invalidate code",
+  "codeInvalidated": "Code invalidated",
+  "deleteSessionConfirm": "Are you sure you want to delete \"{name}\"?\nThis action cannot be undone.",
+  "@deleteSessionConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "spotTaken": "Spot taken",
+  "anotherUserTookYourSpot": "Another user took your spot in this session. You will be redirected to home.",
+  "ok": "OK",
+  "joinSessionText": "Join session \"{name}\"!\n\nCode: {code}\n\nUse this code in the Cards Splitter app to join.",
+  "@joinSessionText": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "code": {"type": "String"}
+    }
+  },
+  "calculate": "Calculate",
+  "currentHand": "Current Hand",
+  "newHand": "New Hand",
+  "movement": "Movement",
+  "goBack": "Go back",
+  "settleDebts": "Settle Debts",
+  "optimalSolution": "Optimal Solution",
+  "minTransfersToSettle": "These are the minimum transfers\nto settle all debts",
+  "allGood": "All good!",
+  "noDebtsToSettle": "There are no debts to settle",
+  "owesTo": "owes to",
+  "transfersNeeded": "{count, plural, =1{1 transfer needed} other{{count} transfers needed}}",
+  "@transfersNeeded": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "selectGameMode": "Select a game mode",
+  "chooseGame": "Choose the Game",
+  "whichGameToPlay": "Which game do you want to play?",
+  "selectModeForSettings": "Select a mode for preset rules and settings",
+  "variant": "Variant",
+  "settings": "Settings",
+  "showRules": "Show rules",
+  "confirmMode": "Confirm: {mode}",
+  "@confirmMode": {
+    "placeholders": {
+      "mode": {"type": "String"}
+    }
+  },
+  "selectAMode": "Select a mode",
+  "newMovement": "New Movement",
+  "recordPayment": "Record a payment",
+  "fromWhoPays": "From (pays)",
+  "you": "You",
+  "selectPlayer": "Select player",
+  "toWhoReceives": "To (receives)",
+  "amount": "Amount",
+  "descriptionOptional": "Description (optional)",
+  "descriptionHint": "e.g. Poker win",
+  "saving": "Saving...",
+  "saveMovement": "Save Movement",
+  "movementAdded": "Movement added!",
+  "selectBothPlayers": "Select both players",
+  "playersMustBeDifferent": "Players must be different",
+  "enterValidAmount": "Enter a valid amount",
+  "notAssigned": "Not assigned",
+  "readyToPlay": "Ready to play?",
+  "startHandWhenReady": "Start a new hand when everyone is ready",
+  "waitForAdminToStart": "Wait for admin to start the hand...",
+  "startHand": "Start Hand",
+  "pot": "Pot",
+  "cancelHand": "Cancel Hand",
+  "adminPanel": "Admin Panel",
+  "freeMode": "Free Mode",
+  "freeModeDescription": "In this mode, use the \"Movement\" button to manually record who pays and who receives.",
+  "backToSession": "Back to session",
+  "phase": "Phase {current}/{total}",
+  "@phase": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "betToMatch": "Bet to match: {amount}",
+  "@betToMatch": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "yourTurn": "Your turn!",
+  "turnOf": "Turn of:",
+  "waitYourTurn": "Wait for your turn...",
+  "fold": "Fold",
+  "check": "Check",
+  "call": "Call {amount}",
+  "@call": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "raise": "Raise",
+  "bet": "Bet",
+  "minAmount": "Min: {amount}",
+  "@minAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "amountPlaceholder": "Amount",
+  "amountMustBeGreater": "Amount must be greater than {amount}",
+  "@amountMustBeGreater": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "waiting": "Waiting...",
+  "youChecked": "You checked",
+  "youCalled": "You called",
+  "youRaised": "You raised",
+  "youFolded": "You folded",
+  "waitingForAdmin": "Waiting for admin",
+  "adminManagingBets": "The admin is managing bets...",
+  "handFinished": "Hand finished!",
+  "adminAssigningWinners": "The admin is assigning winners...",
+  "assignWinners": "Assign Winners",
+  "totalPot": "Total Pot: {amount}",
+  "@totalPot": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "confirmAndCloseHand": "Confirm and Close Hand",
+  "selectAtLeastOneWinner": "Select at least one winner",
+  "playerOrder": "Player Order",
+  "applyOrder": "Apply Order",
+  "endHand": "End Hand",
+  "cancelHandQuestion": "Cancel the hand?",
+  "cancelHandWarning": "This action will cancel the current hand and ALL financial movements made during this hand will be deleted.\n\nThe financial situation will return to the previous state.",
+  "noKeepIt": "No, keep it",
+  "yesCancelHand": "Yes, cancel hand",
+  "someoneMadeLasVegas": "Someone made Las Vegas!",
+  "handCompleted": "Hand completed!",
+  "handCancelledMovementsRemoved": "Hand cancelled! All movements have been removed.",
+  "dealer": "Dealer",
+  "none": "None",
+  "dealerBet": "Dealer bet",
+  "yourBet": "Your bet",
+  "bets": "Bets",
+  "noBetsYet": "No bets yet",
+  "dealerManagement": "Dealer Management",
+  "decideForEachPlayer": "Decide for each player:",
+  "pay": "Pay",
+  "take": "Take",
+  "iBustedPayAll": "I busted! Pay all",
+  "wantToBeDealer": "I want to be the dealer",
+  "wantsToBeDealer": "{name} wants to become dealer",
+  "@wantsToBeDealer": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "reject": "Reject",
+  "accept": "Accept",
+  "potWillBeAssigned": "The pot ({amount}) will be assigned to you",
+  "@potWillBeAssigned": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "whoIsDealer": "Who is the dealer?",
+  "playerMustDeclareDealer": "A player must declare themselves dealer to start the hand.",
+  "imTheDealer": "I'll be the dealer!",
+  "setPot": "Set the Pot",
+  "youAreDealer": "You are the dealer! How much do you put in the pot?",
+  "confirmPot": "Confirm Pot",
+  "enterValidAmountGreaterThan0": "Enter a valid amount greater than 0",
+  "waitingForDealer": "Waiting for dealer",
+  "dealerSettingPot": "{name} is setting the pot...",
+  "@dealerSettingPot": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "yourActions": "Your actions",
+  "iPay": "I pay",
+  "iRequest": "I request",
+  "requestNeedsConfirmation": "💡 \"I request\" needs confirmation from the dealer",
+  "pendingRequests": "Pending requests",
+  "requests": "{name} requests {amount}",
+  "@requests": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "amount": {"type": "String"}
+    }
+  },
+  "confirm": "Confirm",
+  "insufficientPot": "Insufficient pot!",
+  "potExhausted": "Pot exhausted! A new dealer must be declared.",
+  "terminateHand": "Terminate hand?",
+  "terminateHandConfirm": "Are you sure you want to terminate the current hand?",
+  "terminate": "Terminate",
+  "cancelGame": "Cancel game?",
+  "cancelGameWarning": "This action will cancel the current game and ALL financial movements made during this game will be deleted.\n\nThe financial situation will return to the previous state.",
+  "yesCancelGame": "Yes, cancel game",
+  "setLives": "Set Lives",
+  "waitingForAdminSetup": "The admin is configuring lives and value...",
+  "configureLives": "Configure Lives",
+  "setLivesAndValue": "Set the number of lives and value per life",
+  "livesPerPlayer": "Lives per player",
+  "valuePerLife": "Value per life",
+  "summary": "Summary",
+  "eachPlayerPays": "Each player pays: {amount}",
+  "@eachPlayerPays": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "startGame": "Start Game",
+  "valueMustBeGreaterThan0": "Value must be greater than 0!",
+  "youWon": "You Won!",
+  "gameOver": "Game Over!",
+  "wins": "Wins {amount}",
+  "@wins": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "claimWinnings": "Claim Winnings!",
+  "confirmVictory": "Confirm Victory",
+  "playerWins": "🎉 {name} won {amount}!",
+  "@playerWins": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "amount": {"type": "String"}
+    }
+  },
+  "lifeValue": "Life Value",
+  "inGame": "In Game",
+  "playersCount": "{count} players",
+  "@playersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "requestsLifeFrom": "{from} asks for a life from {to}",
+  "@requestsLifeFrom": {
+    "placeholders": {
+      "from": {"type": "String"},
+      "to": {"type": "String"}
+    }
+  },
+  "giveLife": "Give Life",
+  "eliminated": "Eliminated",
+  "youHaveLives": "You have {count} {count, plural, =1{life} other{lives}}",
+  "@youHaveLives": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "youAreEliminatedAskLife": "You are eliminated! You can ask someone for a life.",
+  "loseLife": "Lose a life",
+  "askLifeFrom": "Ask for a life from:",
+  "selectAPlayer": "Select a player...",
+  "noLifesToGive": "You have no lives to give!",
+  "noOtherPlayersInGame": "No other players are left in the game",
+  "tieLastTwo": "Tie! The last 2 players both have 1 life.",
+  "allReenterWith1Life": "Everyone re-enters with 1 life",
+  "playersReentered": "{count} players re-entered with 1 life!",
+  "@playersReentered": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "terminateGame": "Terminate game?",
+  "terminateGameConfirm": "Are you sure you want to terminate the current game?",
+  "mode": "Mode: {mode}",
+  "@mode": {
+    "placeholders": {
+      "mode": {"type": "String"}
+    }
+  },
+  "gameModeLibera": "Free Mode",
+  "gameModeSetteEMezzo": "Seven and a Half",
+  "gameModeCucu": "Cucù",
+  "gameModeTrentuno": "Thirty-One",
+  "gameModeLasVegas": "Las Vegas",
+  "gameModeBestia": "Bestia",
+  "gameModeShortLibera": "No preset rules, free management of movements",
+  "gameModeShortSetteEMezzo": "Get close to 7.5 points without busting",
+  "gameModeShortCucu": "Don't be left with the lowest card",
+  "gameModeShortTrentuno": "Reach 31 points with the same suit",
+  "gameModeShortLasVegas": "Highest and lowest scores win!",
+  "gameModeShortBestia": "Win tricks, don't go in bestia!",
+  "variantMazziereVsTutti": "Dealer vs All",
+  "variant1vs1ConPiatto": "1 vs 1 with Pot",
+  "variantClassico": "Classic",
+  "variantConPenalita": "With Penalties",
+  "variantSaltacavallo": "Saltacavallo",
+  "variantConVite": "With Lives",
+  "variantScartiVisibili": "Visible Discards",
+  "variantRilancioLimitato": "Limited Raise",
+  "variantTreCarte": "Three Cards",
+  "variantQuattroCarte": "Four Cards",
+  "variantCinqueCarte": "Five Cards",
+  "variantConAccomodo": "With Accomodo",
+  "settingUsaMatta": "Use the Matta (King of Coins)",
+  "settingSetteEMezzoReale": "Seven and a Half Reale beats everything",
+  "settingNumeroVite": "Number of lives",
+  "settingTrisVale30": "Three of a kind is worth 30.5 points",
+  "settingBestiaPaga": "Going in bestia doubles the pot",
+  "quickAdd": "Quick add",
+  "clear": "Clear",
+  "highScore": "High Score",
+  "lowScore": "Low Score",
+  "lasVegasFull": "Las Vegas!",
+  "setteEMezzoReale": "Seven and a Half Reale",
+  "trentunoWin": "Thirty-One!",
+  "cucuLoser": "Loser",
+  "bestiaPay": "In Bestia",
+  "standardWin": "Win",
+  "winnerDesc": "Winner takes the pot",
+  "highScoreDesc": "Half pot to highest score",
+  "lowScoreDesc": "Half pot to lowest score",
+  "lasVegasFullDesc": "Full pot to who discarded all cards",
+  "setteEMezzoRealeDesc": "7.5 with only 2 cards",
+  "trentunoDesc": "Reached 31 points",
+  "cucuLoserDesc": "Had the lowest card",
+  "bestiaPayDesc": "Didn't win any tricks",
+  "bestia": "Bestia",
+  "playTheRound": "Play the round!",
+  "nowPlayCards": "Now play the cards!",
+  "bestiaContinuesUntilWon": "Bestia continues until it's won!",
+  "roundPlayed": "Round played! Go to choices",
+  "dealerBetPhase": "You are the dealer!",
+  "dealerMustPayQuota": "You must put {amount} in the pot.",
+  "@dealerMustPayQuota": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "waitDealerPays": "Wait for {name} to put the quota...",
+  "@waitDealerPays": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "payQuota": "Pay {amount}",
+  "@payQuota": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "dealerQuota": "Dealer quota",
+  "choiceCancelled": "Choice of {name} cancelled",
+  "@choiceCancelled": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "takeQuotesAmount": "Take {count} {count, plural, =1{quote} other{quotes}} ({amount})",
+  "@takeQuotesAmount": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "amount": {"type": "String"}
+    }
+  },
+  "currentPot": "Current pot",
+  "quotesAvailable": "{count} {count, plural, =1{quote available} other{quotes available}}",
+  "@quotesAvailable": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "quotesToWin": "3 quotes to win",
+  "playerChoices": "Player choices",
+  "edit": "Edit",
+  "whatDoYouWant": "What do you want to do?",
+  "mustTakeRemainingQuotes": "You must take the remaining quotes!",
+  "allOthersOutOrPaid": "All other players have exited or paid bestia.\nYou are obligated to take the {count, plural, =1{remaining quote} other{{count} remaining quotes}}.",
+  "@allOthersOutOrPaid": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "takeQuotes": "Take {count} {count, plural, =1{quote} other{quotes}} ({amount})",
+  "@takeQuotes": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "amount": {"type": "String"}
+    }
+  },
+  "allQuotesTaken": "All quotes have been taken",
+  "canOnlyExitOrPay": "You can only exit the game or pay bestia",
+  "exitGame": "Exit the game",
+  "dontParticipate": "You don't participate in the distribution",
+  "payBestia": "Pay Bestia",
+  "payInNewPot": "You pay {amount} into the new pot",
+  "@payInNewPot": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "orTakeQuotes": "Or take some quotes:",
+  "takeQuotesMax": "Take quotes (max {count}):",
+  "@takeQuotesMax": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "quote": "quote",
+  "quotes": "quotes",
+  "notAvailable": "N/A",
+  "youChose": "You chose:",
+  "waitForOthers": "Wait for everyone to choose...",
+  "exits": "Exits",
+  "paysBestia": "Pays Bestia",
+  "takes1Quote": "Takes 1 quote",
+  "takes2Quotes": "Takes 2 quotes",
+  "takes3Quotes": "Takes 3 quotes",
+  "choicesToFix": "Choices to fix",
+  "bestiaContinues": "Bestia continues!",
+  "bestiaFallen": "Bestia has fallen!",
+  "potDistributed": "Pot distributed: {amount}",
+  "@potDistributed": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "quotesOf": "(3 quotes of {amount})",
+  "@quotesOf": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "playersPayBestia": "{count} {count, plural, =1{player pays} other{players pay}} Bestia",
+  "@playersPayBestia": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "eachPayment": "Each payment: {amount}",
+  "@eachPayment": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "newPot": "New pot: {amount} + dealer quota",
+  "@newPot": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "choicesSummary": "Choices summary",
+  "modifyChoices": "Modify choices",
+  "fixChoicesBeforeConfirm": "Fix the choices before confirming",
+  "confirmAndContinue": "Confirm and Continue",
+  "confirmAndCloseBestia": "Confirm and Close Bestia",
+  "waitAdminConfirm": "Wait for admin to confirm...",
+  "errorInChoices": "Error in choices!",
+  "quotesAssigned": "Quotes assigned are {count} out of 3.\nMust be exactly 3 quotes.",
+  "@quotesAssigned": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "selectPlayerToResetChoice": "Select a player to reset their choice:",
+  "choiceOf": "Choice of {name} cancelled",
+  "@choiceOf": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "bestiaContinuesNewPot": "🦁 Bestia continues! New pot: {pot} - Dealer: {dealer}",
+  "@bestiaContinuesNewPot": {
+    "placeholders": {
+      "pot": {"type": "String"},
+      "dealer": {"type": "String"}
+    }
+  },
+  "bestiaEndedNobodyPaid": "🦁 Bestia has ended! Nobody paid.",
+  "setQuota": "Set the Quota",
+  "whatShouldDealerBet": "How much should the dealer bet?",
+  "confirmQuota": "Confirm Quota",
+  "waitingAdminSetQuota": "The admin is setting the dealer quota...",
+  "setPlayerOrder": "Player Order",
+  "dragPlayersToSetOrder": "Drag players to set the play order.\nThe first will be the initial dealer.",
+  "playOrder": "Play order",
+  "confirmOrder": "Confirm Order",
+  "waitingAdminSetOrder": "The admin is setting the player order...",
+  "gameCancelledMovementsRemoved": "Game cancelled! All movements have been removed.",
+  "gameRulesLibera": "🎴 FREE MODE\n\nThis mode has no preset rules. It's perfect for:\n• Games not included in the app\n• Custom situations\n• Free management of wins and losses\n\nSimply record who pays and who receives after each hand.",
+  "gameRulesSetteEMezzo": "7️⃣ SEVEN AND A HALF\n\n📜 OBJECTIVE\nGet as close as possible to 7.5 points without going over.\n\n🃏 CARD VALUES\n• Cards 1-7: face value\n• Jack, Horse, King: ½ point each\n• King of Coins (Matta): takes any value (0.5 to 7)\n\n⭐ SEVEN AND A HALF REALE\nMaking 7.5 with only 2 cards (a 7 + a face card) beats any other 7.5.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🎯 MODE: DEALER VS ALL\n\n📋 GAMEPLAY\n1. One player is the dealer (bank)\n2. Each player places their bet\n3. The dealer distributes cards and plays last\n4. At the end, the dealer decides:\n   • Which players to take from (if beaten)\n   • Which players to pay (if they beat the dealer)\n   • If busted, pays all players\n\n💱 DEALER CHANGE\n• Any player can declare themselves dealer\n• The current dealer must confirm\n• If confirmed, the handover occurs\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🎯 MODE: 1 VS 1 WITH POT\n\n📋 GAMEPLAY\n1. There's a common pot\n2. The dealer plays against one player at a time\n3. There's no fixed order\n4. Each player can:\n   • Pay the dealer an amount (goes into pot)\n   • Request money from dealer (dealer confirms and player takes from pot)\n\n💱 DEALER CHANGE\n• Any player can declare themselves dealer\n• The current dealer must confirm\n• If confirmed, the pot goes to the outgoing dealer\n• The new dealer starts with empty pot",
+  "gameRulesCucu": "🐦 CUCÙ (SALTACAVALLO)\n\n📜 OBJECTIVE\nDon't have the lowest card at the end of the turn.\n\n🃏 CARD HIERARCHY\nFrom highest to lowest:\nKing > Horse > Jack > 7 > 6 > 5 > 4 > 3 > 2 > 1 (Ace)\n\n📋 GAMEPLAY\n1. Each player receives one face-down card\n2. Starting from the dealer's left, each player can:\n   - Keep their card (\"I'm good\")\n   - Swap it with the next player\n3. The next player MUST swap, unless they have a King\n4. The dealer can swap with the deck\n5. Whoever has the lowest card loses a life\n\n🛡️ SPECIAL CARDS\n• King: blocks the swap (who has the King says \"Cucù!\")\n• Ace: is the lowest card, always try to swap it\n\n💀 ELIMINATION\nEach player has 3 lives. The one who runs out loses.\nThe last one standing wins!",
+  "gameRulesTrentuno": "3️⃣1️⃣ THIRTY-ONE\n\n📜 OBJECTIVE\nGet 31 points or the highest score with cards of the same suit.\n\n🃏 CARD VALUES\n• Ace: 11 points\n• King, Horse, Jack: 10 points each\n• Number cards: face value\n\n📋 GAMEPLAY\n1. Each player receives 3 cards\n2. One card is revealed to start the discards\n3. In turn, each player can:\n   - Draw from the deck or discards\n   - Discard a card\n4. Whoever reaches 31 declares immediately\n5. Whoever thinks they have a good score can \"knock\"\n6. After knocking, each other player has one last turn\n\n🏆 SPECIAL COMBINATIONS\n• 31: three cards of the same suit totaling 31\n• Three of a kind: three cards of the same value (worth 30.5 points)\n\n💀 VARIANT WITH LIVES\nEach player has 3 lives. The lowest score loses a life.",
+  "gameRulesLasVegas": "🎰 LAS VEGAS\n\n📜 OBJECTIVE\nGet the highest OR lowest score. The pot is split between these two winners!\n\n🃏 CARDS AND VALUES\n• Italian 40-card deck\n• Number cards: face value (1-7)\n• Face cards (King, Horse, Jack): 10 points each\n• Single Ace: worth 1 point\n• Two or more Aces: worth 11 points each!\n\n👥 PLAYERS\nFrom 2 to 6 players\n\n📋 GAMEPLAY\n\n1️⃣ DEALING\n• Dealer gives 3 face-down cards to each player\n• Places 4 face-down cards in the center\n• Everyone puts a mandatory bet in the pot\n\n2️⃣ BETTING ROUND\nLike Poker, counter-clockwise:\n• Bet: put an amount in the pot\n• Check/Pass: if no one has bet\n• Call: match someone else's bet\n• Raise: bet more\n• Fold: exit the hand\n\n3️⃣ DISCARDING\nAfter each betting round, dealer reveals a center card.\nAll players MUST discard cards of the same value!\n(If a card already out appears, replace it from deck)\n\n4️⃣ REPEAT\nRepeat betting and discarding for all 4 center cards.\n\n🏆 FINALE\nAfter the last round, show cards:\n• Half pot → HIGHEST score\n• Half pot → LOWEST score\n\n⭐ LAS VEGAS!\nIf a player discards ALL their cards, they make \"Las Vegas\" and win the ENTIRE pot!",
+  "gameRulesBestia": "🦁 BESTIA\n\n📜 OBJECTIVE\nWin at least one trick to avoid \"going in bestia\".\n\n🃏 CARDS USED\nItalian 40-card deck.\n\n📋 GAMEPLAY\n1. Each player receives 3 cards (or 4-5 in some variants)\n2. A card is revealed to determine trump\n3. Each player decides to participate (\"Knock\") or pass\n4. Tricks are played like in Briscola\n5. Whoever wins no tricks \"goes in bestia\"\n\n🔥 GOING IN BESTIA\nWhoever wins no tricks must pay a penalty:\n• Usually doubles the existing pot\n• Or pays a fixed amount set at the start\n\n🎴 VARIANTS\n• Three Cards: classic fast version\n• Four Cards: more strategy\n• Five Cards: longer games\n• With Accomodo: before playing you can swap cards\n\n💡 STRATEGY\nIf you have weak cards, better to pass than risk going in bestia!",
+  "variantDescMazziereVsTutti": "The dealer plays against all players. Each player bets and the dealer decides who pays and who receives.",
+  "variantDesc1vs1ConPiatto": "1 vs 1 mode with pot. Players pay or request from the dealer's pot.",
+  "variantDescClassico": "Classic game with 3 lives per player. Last one standing wins.",
+  "variantDescConPenalita": "Losers pay a monetary penalty instead of losing lives.",
+  "variantDescSaltacavallo": "Players can choose to \"skip\" their swap turn.",
+  "variantDescTrentunoClassico": "Whoever reaches 31 declares immediately and wins the hand.",
+  "variantDescConVite": "Lowest score loses a life. Progressive elimination.",
+  "variantDescScartiVisibili": "Discards are visible to everyone, adding a strategic element.",
+  "variantDescLasVegasClassico": "Standard rules with free bets and raises.",
+  "variantDescRilancioLimitato": "Raises are limited to a maximum set at the start.",
+  "variantDescTreCarte": "Classic and fast version with 3 cards per player.",
+  "variantDescQuattroCarte": "4 cards per player, more strategic possibilities.",
+  "variantDescCinqueCarte": "5 cards per player, longer and more complex games.",
+  "variantDescConAccomodo": "Before playing you can discard and swap cards."
+}
+

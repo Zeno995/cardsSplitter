@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/game_mode.dart';
 import '../theme/app_theme.dart';
 
@@ -55,10 +56,11 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
   }
 
   void _confirm() {
+    final l10n = AppLocalizations.of(context)!;
     if (_selectedType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Seleziona una modalità di gioco'),
+        SnackBar(
+          content: Text(l10n.selectGameMode),
           backgroundColor: AppTheme.accentRed,
         ),
       );
@@ -109,7 +111,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      mode.displayName,
+                      mode.getDisplayName(context),
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -128,7 +130,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                 child: SingleChildScrollView(
                   controller: scrollController,
                   child: Text(
-                    mode.fullRules,
+                    mode.getFullRules(context),
                     style: GoogleFonts.lato(
                       fontSize: 15,
                       color: AppTheme.cream,
@@ -146,9 +148,10 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scegli il Gioco'),
+        title: Text(l10n.chooseGame),
       ),
       body: ChristmasBackground(
         child: Column(
@@ -160,7 +163,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Quale gioco volete fare?',
+                      l10n.whichGameToPlay,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -174,7 +177,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                     const SizedBox(height: 8),
                     
                     Text(
-                      'Seleziona una modalità per avere regole e impostazioni predefinite',
+                      l10n.selectModeForSettings,
                       style: GoogleFonts.lato(
                         fontSize: 14,
                         color: AppTheme.cream.withValues(alpha: 0.6),
@@ -186,9 +189,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                     const SizedBox(height: 24),
                     
                     // Lista dei giochi
-                    ...GameType.values.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final type = entry.value;
+                    ...GameType.values.map((type) {
                       final tempMode = GameMode(type: type);
                       final isSelected = _selectedType == type;
                       
@@ -223,7 +224,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        tempMode.displayName,
+                                        tempMode.getDisplayName(context),
                                         style: GoogleFonts.playfairDisplay(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -234,7 +235,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        tempMode.shortDescription,
+                                        tempMode.getShortDescription(context),
                                         style: GoogleFonts.lato(
                                           fontSize: 12,
                                           color: AppTheme.cream.withValues(alpha: 0.7),
@@ -247,7 +248,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                                   onPressed: () => _showRules(tempMode),
                                   icon: const Icon(Icons.info_outline),
                                   color: AppTheme.gold.withValues(alpha: 0.7),
-                                  tooltip: 'Mostra regole',
+                                  tooltip: l10n.showRules,
                                 ),
                                 if (isSelected)
                                   const Icon(
@@ -263,9 +264,9 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                             ),
                           ),
                         ),
-                      ).animate(delay: Duration(milliseconds: 50 * index))
-                        .fadeIn(duration: 300.ms)
-                        .slideX(begin: 0.1, end: 0);
+                      ).animate()
+                        .fadeIn(duration: 200.ms)
+                        .slideX(begin: 0.05, end: 0);
                     }),
                     
                     // Varianti (se il gioco ne ha)
@@ -273,7 +274,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                       const SizedBox(height: 24),
                       
                       Text(
-                        'Variante',
+                        l10n.variant,
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -284,9 +285,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                       
                       const SizedBox(height: 12),
                       
-                      ...(_currentOptions!.variants.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final variant = entry.value;
+                      ...(_currentOptions!.variants.map((variant) {
                         final isSelected = _selectedVariantId == variant.id;
                         
                         return Card(
@@ -336,9 +335,9 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                               ),
                             ),
                           ),
-                        ).animate(delay: Duration(milliseconds: 50 * index))
-                          .fadeIn(duration: 300.ms)
-                          .slideX(begin: -0.1, end: 0);
+                        ).animate()
+                          .fadeIn(duration: 200.ms)
+                          .slideX(begin: -0.05, end: 0);
                       })),
                     ],
                     
@@ -347,7 +346,7 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                       const SizedBox(height: 24),
                       
                       Text(
-                        'Impostazioni',
+                        l10n.settings,
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -396,8 +395,8 @@ class _SelectGameModeScreenState extends State<SelectGameModeScreen> {
                   icon: const Icon(Icons.check),
                   label: Text(
                     _selectedType != null 
-                        ? 'Conferma: ${GameMode(type: _selectedType!).displayName}'
-                        : 'Seleziona una modalità',
+                        ? l10n.confirmMode(GameMode(type: _selectedType!).getDisplayName(context))
+                        : l10n.selectAMode,
                   ),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 56),

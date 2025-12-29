@@ -4,18 +4,26 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../models/player.dart';
+import '../models/game_mode.dart';
 import '../models/game_hand.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/amount_keypad.dart';
 
 /// Schermata per gestire partite a 31 e Cucù (giochi con vite)
 class TrentunoCucuScreen extends StatefulWidget {
   final String sessionId;
+  final GameMode? initialGameMode;
 
-  const TrentunoCucuScreen({super.key, required this.sessionId});
+  const TrentunoCucuScreen({
+    super.key, 
+    required this.sessionId,
+    this.initialGameMode,
+  });
 
   @override
   State<TrentunoCucuScreen> createState() => _TrentunoCucuScreenState();
@@ -50,8 +58,19 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
     return session.players.firstWhere((p) => p.id == id);
   }
 
+  /// Ottiene il GameMode corrente (dalla mano attiva o da initialGameMode)
+  GameMode _getGameMode(GameSession session) {
+    if (session.activeHand != null) {
+      return GameMode(
+        type: session.activeHand!.gameType,
+        variantId: session.activeHand!.variantId,
+      );
+    }
+    return widget.initialGameMode ?? const GameMode(type: GameType.trentuno);
+  }
+
   /// Avvia una nuova mano
-  Future<void> _startNewHand(GameSession session) async {
+  Future<void> _startNewHand(GameSession session, GameType gameType, String? variantId) async {
     final dbService = context.read<DatabaseService>();
     final authService = context.read<AuthService>();
 
@@ -64,8 +83,8 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
 
     final hand = ActiveHand(
       id: _uuid.v4(),
-      gameType: session.gameMode.type,
-      variantId: session.gameMode.variantId,
+      gameType: gameType,
+      variantId: variantId,
       createdAt: DateTime.now(),
       createdBy: authService.currentUser?.uid ?? 'anonymous',
       playerOrder: playerOrder,
@@ -86,8 +105,8 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
 
     if (lifeValue <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Il valore della vita deve essere maggiore di 0!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.valueMustBeGreaterThan0),
           backgroundColor: AppTheme.accentRed,
         ),
       );
@@ -115,7 +134,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
         fromPlayerId: playerId,
         toPlayerId: '_piatto_vita_',
         amount: totalPerPlayer,
-        description: '${session.gameMode.icon} Quota iniziale ($lives vite × ${_currencyFormat.format(lifeValue)})',
+        description: '${_getGameMode(session).icon} Quota iniziale ($lives vite × ${_currencyFormat.format(lifeValue)})',
         createdBy: createdBy,
         handId: hand.id,
       );
@@ -181,8 +200,8 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
 
     if (fromLives <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Non hai vite da cedere!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.noLifesToGive),
           backgroundColor: AppTheme.accentRed,
         ),
       );
@@ -261,7 +280,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
         fromPlayerId: '_piatto_vita_',
         toPlayerId: winnerId,
         amount: hand.lifePot,
-        description: '${session.gameMode.icon} Vittoria finale!',
+        description: '${_getGameMode(session).icon} Vittoria finale!',
         createdBy: authService.currentUser?.uid ?? 'anonymous',
         handId: hand.id,
       );
@@ -302,8 +321,8 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mano annullata! Tutti i movimenti sono stati rimossi.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.gameCancelledMovementsRemoved),
           backgroundColor: AppTheme.gold,
         ),
       );
@@ -339,7 +358,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                         size: 60, color: AppTheme.accentRed),
                     const SizedBox(height: 16),
                     Text(
-                      'Sessione non trovata',
+                      AppLocalizations.of(context)!.sessionNotFound,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 20,
                         color: AppTheme.cream,
@@ -348,7 +367,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     const SizedBox(height: 24),
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Torna indietro'),
+                      child: Text(AppLocalizations.of(context)!.goBack),
                     ),
                   ],
                 ),
@@ -359,8 +378,9 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
 
         final hand = session.activeHand;
         final isAdmin = _isAdmin(session);
-        final gameIcon = session.gameMode.icon;
-        final gameName = session.gameMode.displayName;
+        final gameMode = _getGameMode(session);
+        final gameIcon = gameMode.icon;
+        final gameName = gameMode.displayName;
 
         // Se non c'è una mano attiva
         if (hand == null) {
@@ -408,7 +428,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     .scale(),
                 const SizedBox(height: 24),
                 Text(
-                  'Pronto per giocare?',
+                  AppLocalizations.of(context)!.readyToPlay,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -418,8 +438,8 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                 const SizedBox(height: 12),
                 Text(
                   isAdmin
-                      ? 'Inizia una nuova partita quando tutti sono pronti'
-                      : 'Aspetta che l\'admin inizi la partita...',
+                      ? AppLocalizations.of(context)!.startHandWhenReady
+                      : AppLocalizations.of(context)!.waitForAdminToStart,
                   style: GoogleFonts.lato(
                     fontSize: 16,
                     color: AppTheme.cream.withValues(alpha: 0.7),
@@ -429,9 +449,12 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                 const SizedBox(height: 32),
                 if (isAdmin)
                   ElevatedButton.icon(
-                    onPressed: () => _startNewHand(session),
+                    onPressed: () {
+                      final gameMode = _getGameMode(session);
+                      _startNewHand(session, gameMode.type, gameMode.variantId);
+                    },
                     icon: const Icon(Icons.play_arrow),
-                    label: const Text('Inizia Partita'),
+                    label: Text(AppLocalizations.of(context)!.startGame),
                   ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
               ],
             ),
@@ -472,7 +495,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                   ).animate().fadeIn(duration: 400.ms).scale(),
                   const SizedBox(height: 24),
                   Text(
-                    'In attesa dell\'admin',
+                    AppLocalizations.of(context)!.waitingForAdmin,
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -481,7 +504,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                   ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
                   const SizedBox(height: 12),
                   Text(
-                    'L\'amministratore sta configurando le vite e il valore...',
+                    AppLocalizations.of(context)!.waitingForAdminSetup,
                     style: GoogleFonts.lato(
                       fontSize: 14,
                       color: AppTheme.cream.withValues(alpha: 0.7),
@@ -520,7 +543,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     .scale(),
                 const SizedBox(height: 24),
                 Text(
-                  'Configura le Vite',
+                  AppLocalizations.of(context)!.configureLives,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -529,7 +552,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                 ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
                 const SizedBox(height: 12),
                 Text(
-                  'Imposta il numero di vite e il valore di ogni vita',
+                  AppLocalizations.of(context)!.setLivesAndValue,
                   style: GoogleFonts.lato(
                     fontSize: 14,
                     color: AppTheme.cream.withValues(alpha: 0.7),
@@ -542,56 +565,59 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        // Numero vite
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Vite per giocatore',
-                                style: GoogleFonts.lato(color: AppTheme.cream),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                final current =
-                                    int.tryParse(_livesController.text) ?? 3;
-                                if (current > 1) {
-                                  _livesController.text = '${current - 1}';
-                                  setState(() {});
-                                }
-                              },
-                              icon: const Icon(Icons.remove_circle_outline,
-                                  color: AppTheme.gold),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.gold.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                _livesController.text,
-                                style: GoogleFonts.lato(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.gold,
+                        // Numero vite - usa ListenableBuilder per aggiornare solo questa parte
+                        ListenableBuilder(
+                          listenable: _livesController,
+                          builder: (context, _) {
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    AppLocalizations.of(context)!.livesPerPlayer,
+                                    style: GoogleFonts.lato(color: AppTheme.cream),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                final current =
-                                    int.tryParse(_livesController.text) ?? 3;
-                                if (current < 10) {
-                                  _livesController.text = '${current + 1}';
-                                  setState(() {});
-                                }
-                              },
-                              icon: const Icon(Icons.add_circle_outline,
-                                  color: AppTheme.gold),
-                            ),
-                          ],
+                                IconButton(
+                                  onPressed: () {
+                                    final current =
+                                        int.tryParse(_livesController.text) ?? 3;
+                                    if (current > 1) {
+                                      _livesController.text = '${current - 1}';
+                                    }
+                                  },
+                                  icon: const Icon(Icons.remove_circle_outline,
+                                      color: AppTheme.gold),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.gold.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _livesController.text,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.gold,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    final current =
+                                        int.tryParse(_livesController.text) ?? 3;
+                                    if (current < 10) {
+                                      _livesController.text = '${current + 1}';
+                                    }
+                                  },
+                                  icon: const Icon(Icons.add_circle_outline,
+                                      color: AppTheme.gold),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
                         // Valore vita
@@ -606,7 +632,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                           decoration: InputDecoration(
-                            labelText: 'Valore di ogni vita',
+                            labelText: AppLocalizations.of(context)!.valuePerLife,
                             labelStyle: GoogleFonts.lato(
                               color: AppTheme.cream.withValues(alpha: 0.7),
                             ),
@@ -623,10 +649,13 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                             border: InputBorder.none,
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        AmountKeypad(controller: _lifeValueController),
                         const SizedBox(height: 24),
-                        // Riepilogo
-                        Builder(
-                          builder: (context) {
+                        // Riepilogo - usa ListenableBuilder per aggiornare solo questa parte
+                        ListenableBuilder(
+                          listenable: Listenable.merge([_livesController, _lifeValueController]),
+                          builder: (context, _) {
                             final lives = int.tryParse(_livesController.text) ?? 3;
                             final lifeValue = double.tryParse(
                                   _lifeValueController.text.replaceAll(',', '.'),
@@ -643,7 +672,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                               child: Column(
                                 children: [
                                   Text(
-                                    'Riepilogo',
+                                    AppLocalizations.of(context)!.summary,
                                     style: GoogleFonts.lato(
                                       color: AppTheme.gold,
                                       fontWeight: FontWeight.bold,
@@ -659,7 +688,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Ogni giocatore paga: ${_currencyFormat.format(totalPerPlayer)}',
+                                    AppLocalizations.of(context)!.eachPlayerPays(_currencyFormat.format(totalPerPlayer)),
                                     style: GoogleFonts.lato(
                                       color: AppTheme.cream,
                                       fontSize: 14,
@@ -667,7 +696,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Piatto totale: ${_currencyFormat.format(totalPot)}',
+                                    AppLocalizations.of(context)!.totalPot(_currencyFormat.format(totalPot)),
                                     style: GoogleFonts.lato(
                                       color: AppTheme.gold,
                                       fontWeight: FontWeight.bold,
@@ -685,7 +714,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                           child: ElevatedButton.icon(
                             onPressed: () => _setupLives(session, hand),
                             icon: const Icon(Icons.check),
-                            label: const Text('Inizia Partita'),
+                            label: Text(AppLocalizations.of(context)!.startGame),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
@@ -724,7 +753,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
             IconButton(
               icon: const Icon(Icons.undo, color: AppTheme.accentRed),
               onPressed: () => _showCancelHandDialog(session, hand),
-              tooltip: 'Annulla Mano',
+              tooltip: AppLocalizations.of(context)!.cancelHand,
             ),
         ],
       ),
@@ -741,7 +770,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     .scale(),
                 const SizedBox(height: 24),
                 Text(
-                  isWinner ? 'Hai Vinto!' : 'Partita Finita!',
+                  isWinner ? AppLocalizations.of(context)!.youWon : AppLocalizations.of(context)!.gameOver,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -765,7 +794,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Vince ${_currencyFormat.format(hand.lifePot)}',
+                    AppLocalizations.of(context)!.wins(_currencyFormat.format(hand.lifePot)),
                     style: GoogleFonts.lato(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -779,8 +808,8 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     onPressed: () => _claimVictory(session, hand),
                     icon: const Icon(Icons.celebration),
                     label: Text(isWinner
-                        ? 'Riscuoti la Vincita!'
-                        : 'Conferma Vittoria'),
+                        ? AppLocalizations.of(context)!.claimWinnings
+                        : AppLocalizations.of(context)!.confirmVictory),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 32, vertical: 16),
@@ -820,7 +849,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Piatto: ${_currencyFormat.format(hand.lifePot)}',
+                  '${AppLocalizations.of(context)!.pot}: ${_currencyFormat.format(hand.lifePot)}',
                   style: GoogleFonts.lato(
                     color: AppTheme.gold,
                     fontWeight: FontWeight.bold,
@@ -833,12 +862,12 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
             IconButton(
               icon: const Icon(Icons.undo, color: AppTheme.accentRed),
               onPressed: () => _showCancelHandDialog(session, hand),
-              tooltip: 'Annulla Mano',
+              tooltip: AppLocalizations.of(context)!.cancelHand,
             ),
             IconButton(
               icon: const Icon(Icons.stop),
               onPressed: () => _showEndHandDialog(session),
-              tooltip: 'Termina Mano',
+              tooltip: AppLocalizations.of(context)!.endHand,
             ),
           ],
         ],
@@ -860,7 +889,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                       Column(
                         children: [
                           Text(
-                            'Valore Vita',
+                            AppLocalizations.of(context)!.lifeValue,
                             style: GoogleFonts.lato(
                               color: AppTheme.cream.withValues(alpha: 0.7),
                               fontSize: 12,
@@ -880,14 +909,14 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                       Column(
                         children: [
                           Text(
-                            'In Gioco',
+                            AppLocalizations.of(context)!.inGame,
                             style: GoogleFonts.lato(
                               color: AppTheme.cream.withValues(alpha: 0.7),
                               fontSize: 12,
                             ),
                           ),
                           Text(
-                            '${hand.playersWithLives.length} giocatori',
+                            AppLocalizations.of(context)!.playersCount(hand.playersWithLives.length),
                             style: GoogleFonts.lato(
                               color: AppTheme.cream,
                               fontSize: 18,
@@ -950,17 +979,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                       style: GoogleFonts.lato(color: AppTheme.cream),
                       children: [
                         TextSpan(
-                          text: requester.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.gold),
-                        ),
-                        const TextSpan(text: ' chiede una vita a '),
-                        TextSpan(
-                          text: target.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.gold),
+                          text: AppLocalizations.of(context)!.requestsLifeFrom(requester.name, target.name),
                         ),
                       ],
                     ),
@@ -979,7 +998,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                         foregroundColor: AppTheme.accentRed,
                         side: const BorderSide(color: AppTheme.accentRed),
                       ),
-                      child: const Text('Rifiuta'),
+                      child: Text(AppLocalizations.of(context)!.reject),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -990,7 +1009,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                         backgroundColor: AppTheme.gold,
                         foregroundColor: AppTheme.darkGreen,
                       ),
-                      child: const Text('Cedi Vita'),
+                      child: Text(AppLocalizations.of(context)!.giveLife),
                     ),
                   ),
                 ],
@@ -1012,7 +1031,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Giocatori',
+              AppLocalizations.of(context)!.players,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -1079,7 +1098,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                           ),
                           if (!isAlive)
                             Text(
-                              'Eliminato',
+                              AppLocalizations.of(context)!.eliminated,
                               style: GoogleFonts.lato(
                                 color: AppTheme.accentRed,
                                 fontSize: 10,
@@ -1130,7 +1149,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Le tue azioni',
+              AppLocalizations.of(context)!.yourActions,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1140,8 +1159,8 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
             const SizedBox(height: 8),
             Text(
               myLives > 0 
-                  ? 'Hai $myLives ${myLives == 1 ? "vita" : "vite"}'
-                  : 'Sei eliminato! Puoi chiedere una vita a qualcuno.',
+                  ? AppLocalizations.of(context)!.youHaveLives(myLives)
+                  : AppLocalizations.of(context)!.youAreEliminatedAskLife,
               style: GoogleFonts.lato(
                 color: isAlive 
                     ? AppTheme.cream.withValues(alpha: 0.7)
@@ -1158,7 +1177,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                   onPressed: () => _loseLife(session, hand),
                   icon: const Icon(Icons.heart_broken, color: AppTheme.accentRed),
                   label: Text(
-                    'Perdi una vita',
+                    AppLocalizations.of(context)!.loseLife,
                     style: GoogleFonts.lato(color: AppTheme.accentRed),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -1172,7 +1191,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
             if (!isAlive && othersWithLives.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Chiedi una vita a:',
+                AppLocalizations.of(context)!.askLifeFrom,
                 style: GoogleFonts.lato(
                   color: AppTheme.cream.withValues(alpha: 0.7),
                   fontSize: 12,
@@ -1195,7 +1214,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                 ),
                 dropdownColor: AppTheme.primaryGreen,
                 hint: Text(
-                  'Seleziona un giocatore...',
+                  AppLocalizations.of(context)!.selectAPlayer,
                   style: GoogleFonts.lato(color: AppTheme.cream.withValues(alpha: 0.5)),
                 ),
                 icon: const Icon(Icons.arrow_drop_down, color: AppTheme.gold),
@@ -1238,7 +1257,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Nessun altro giocatore è rimasto in gioco',
+                        AppLocalizations.of(context)!.noOtherPlayersInGame,
                         style: GoogleFonts.lato(
                           color: AppTheme.accentRed,
                           fontSize: 12,
@@ -1269,7 +1288,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Pari! Gli ultimi 2 giocatori hanno entrambi 1 vita.',
+                      AppLocalizations.of(context)!.tieLastTwo,
                       style: GoogleFonts.lato(color: AppTheme.cream),
                     ),
                   ),
@@ -1281,7 +1300,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => _reenterAll(session, hand),
                   icon: const Icon(Icons.group_add),
-                  label: const Text('Rientrano tutti con 1 vita'),
+                  label: Text(AppLocalizations.of(context)!.allReenterWith1Life),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.gold,
                     foregroundColor: AppTheme.darkGreen,
@@ -1299,27 +1318,27 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
   void _showEndHandDialog(GameSession session) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Text(
-          'Terminare la partita?',
+          AppLocalizations.of(context)!.terminateGame,
           style: GoogleFonts.playfairDisplay(color: AppTheme.gold),
         ),
         content: Text(
-          'Sei sicuro di voler terminare la partita corrente?',
+          AppLocalizations.of(context)!.terminateGameConfirm,
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Annulla', style: GoogleFonts.lato(color: AppTheme.cream)),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppLocalizations.of(context)!.cancel, style: GoogleFonts.lato(color: AppTheme.cream)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               _endHand(session);
             },
-            child: const Text('Termina'),
+            child: Text(AppLocalizations.of(context)!.terminate),
           ),
         ],
       ),
@@ -1329,7 +1348,7 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
   void _showCancelHandDialog(GameSession session, ActiveHand hand) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Row(
           children: [
@@ -1337,30 +1356,30 @@ class _TrentunoCucuScreenState extends State<TrentunoCucuScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Annullare la partita?',
+                AppLocalizations.of(context)!.cancelGame,
                 style: GoogleFonts.playfairDisplay(color: AppTheme.accentRed),
               ),
             ),
           ],
         ),
         content: Text(
-          'Questa azione annullerà la partita corrente e TUTTI i movimenti economici effettuati durante questa partita verranno eliminati.\n\nLa situazione economica tornerà allo stato precedente.',
+          AppLocalizations.of(context)!.cancelGameWarning,
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('No, mantieni', style: GoogleFonts.lato(color: AppTheme.cream)),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppLocalizations.of(context)!.noKeepIt, style: GoogleFonts.lato(color: AppTheme.cream)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               _cancelHand(session, hand);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentRed,
             ),
-            child: const Text('Sì, annulla partita'),
+            child: Text(AppLocalizations.of(context)!.yesCancelGame),
           ),
         ],
       ),

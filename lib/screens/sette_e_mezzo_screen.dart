@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../models/player.dart';
 import '../models/game_mode.dart';
@@ -11,12 +12,18 @@ import '../models/game_hand.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/amount_keypad.dart';
 
 /// Schermata per gestire una partita a Sette e Mezzo
 class SetteEMezzoScreen extends StatefulWidget {
   final String sessionId;
+  final GameMode? initialGameMode;
 
-  const SetteEMezzoScreen({super.key, required this.sessionId});
+  const SetteEMezzoScreen({
+    super.key, 
+    required this.sessionId,
+    this.initialGameMode,
+  });
 
   @override
   State<SetteEMezzoScreen> createState() => _SetteEMezzoScreenState();
@@ -54,8 +61,19 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
     return myPlayer?.id == hand.dealerId;
   }
 
+  /// Ottiene il GameMode corrente (dalla mano attiva o da initialGameMode)
+  GameMode _getGameMode(GameSession session) {
+    if (session.activeHand != null) {
+      return GameMode(
+        type: session.activeHand!.gameType,
+        variantId: session.activeHand!.variantId,
+      );
+    }
+    return widget.initialGameMode ?? const GameMode(type: GameType.setteEMezzo);
+  }
+
   /// Avvia una nuova mano di Sette e Mezzo
-  Future<void> _startNewHand(GameSession session) async {
+  Future<void> _startNewHand(GameSession session, String? variantId) async {
     final dbService = context.read<DatabaseService>();
     final authService = context.read<AuthService>();
     
@@ -67,12 +85,12 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
     }
 
     // Il mazziere NON è impostato di default - deve essere scelto
-    final isOneVsOne = session.gameMode.variantId == SetteEMezzoVariant.unoVsUnoConPiatto.name;
+    final isOneVsOne = variantId == SetteEMezzoVariant.unoVsUnoConPiatto.name;
 
     final hand = ActiveHand(
       id: _uuid.v4(),
       gameType: GameType.setteEMezzo,
-      variantId: session.gameMode.variantId,
+      variantId: variantId,
       createdAt: DateTime.now(),
       createdBy: authService.currentUser?.uid ?? 'anonymous',
       playerOrder: playerOrder,
@@ -90,8 +108,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
   Future<void> _setDealerPot(GameSession session, ActiveHand hand, double amount) async {
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Il piatto deve essere maggiore di 0!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.enterValidAmountGreaterThan0),
           backgroundColor: AppTheme.accentRed,
         ),
       );
@@ -316,8 +334,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
     
     if (payment.amount > hand.dealerPot) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Piatto insufficiente!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.insufficientPot),
           backgroundColor: AppTheme.accentRed,
         ),
       );
@@ -352,8 +370,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
     
     if (needsNewDealer && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Piatto esaurito! Si deve dichiarare un nuovo mazziere.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.potExhausted),
           backgroundColor: AppTheme.gold,
         ),
       );
@@ -391,8 +409,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mano annullata! Tutti i movimenti sono stati rimossi.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.handCancelledMovementsRemoved),
           backgroundColor: AppTheme.gold,
         ),
       );
@@ -427,7 +445,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                     const Icon(Icons.error_outline, size: 60, color: AppTheme.accentRed),
                     const SizedBox(height: 16),
                     Text(
-                      'Sessione non trovata',
+                      AppLocalizations.of(context)!.sessionNotFound,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 20,
                         color: AppTheme.cream,
@@ -436,7 +454,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                     const SizedBox(height: 24),
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Torna indietro'),
+                      child: Text(AppLocalizations.of(context)!.goBack),
                     ),
                   ],
                 ),
@@ -462,7 +480,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               children: [
                 const Text('7️⃣', style: TextStyle(fontSize: 24)),
                 const SizedBox(width: 8),
-                Text(isOneVsOne ? '1 vs 1' : 'Mazziere vs Tutti'),
+                Text(isOneVsOne ? '1 vs 1' : AppLocalizations.of(context)!.variantMazziereVsTutti),
               ],
             ),
             actions: [
@@ -477,7 +495,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'Piatto: ${_currencyFormat.format(hand.dealerPot)}',
+                        '${AppLocalizations.of(context)!.pot}: ${_currencyFormat.format(hand.dealerPot)}',
                         style: GoogleFonts.lato(
                           color: AppTheme.gold,
                           fontWeight: FontWeight.bold,
@@ -490,12 +508,12 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 IconButton(
                   icon: const Icon(Icons.undo, color: AppTheme.accentRed),
                   onPressed: () => _showCancelHandDialog(session, hand),
-                  tooltip: 'Annulla Mano',
+                  tooltip: AppLocalizations.of(context)!.cancelHand,
                 ),
                 IconButton(
                   icon: const Icon(Icons.stop),
                   onPressed: () => _showEndHandDialog(session),
-                  tooltip: 'Termina Mano',
+                  tooltip: AppLocalizations.of(context)!.endHand,
                 ),
               ],
             ],
@@ -513,11 +531,11 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
   Widget _buildNoActiveHand(GameSession session, bool isAdmin) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           children: [
-            Text('7️⃣', style: TextStyle(fontSize: 24)),
-            SizedBox(width: 8),
-            Text('Sette e Mezzo'),
+            const Text('7️⃣', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.of(context)!.gameModeSetteEMezzo),
           ],
         ),
       ),
@@ -534,7 +552,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                   .scale(),
                 const SizedBox(height: 24),
                 Text(
-                  'Pronto per giocare?',
+                  AppLocalizations.of(context)!.readyToPlay,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -545,8 +563,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 const SizedBox(height: 12),
                 Text(
                   isAdmin 
-                      ? 'Inizia una nuova mano quando tutti sono pronti'
-                      : 'Aspetta che l\'admin inizi la mano...',
+                      ? AppLocalizations.of(context)!.startHandWhenReady
+                      : AppLocalizations.of(context)!.waitForAdminToStart,
                   style: GoogleFonts.lato(
                     fontSize: 16,
                     color: AppTheme.cream.withValues(alpha: 0.7),
@@ -556,7 +574,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                   .fadeIn(delay: 400.ms, duration: 400.ms),
                 const SizedBox(height: 8),
                 Text(
-                  'Modalità: ${session.gameMode.variantDisplayName ?? "Standard"}',
+                  AppLocalizations.of(context)!.mode(_getGameMode(session).getVariantDisplayName(context) ?? AppLocalizations.of(context)!.variantClassico),
                   style: GoogleFonts.lato(
                     fontSize: 14,
                     color: AppTheme.gold.withValues(alpha: 0.7),
@@ -567,9 +585,9 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 const SizedBox(height: 32),
                 if (isAdmin)
                   ElevatedButton.icon(
-                    onPressed: () => _startNewHand(session),
+                    onPressed: () => _startNewHand(session, _getGameMode(session).variantId),
                     icon: const Icon(Icons.play_arrow),
-                    label: const Text('Inizia Mano'),
+                    label: Text(AppLocalizations.of(context)!.startHand),
                   ).animate()
                     .fadeIn(delay: 600.ms, duration: 400.ms),
               ],
@@ -624,7 +642,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 onPressed: () => _requestDealerChange(session, hand),
                 icon: const Icon(Icons.swap_horiz, color: AppTheme.gold),
                 label: Text(
-                  'Voglio fare il mazziere',
+                  AppLocalizations.of(context)!.wantToBeDealer,
                   style: GoogleFonts.lato(color: AppTheme.gold),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -685,7 +703,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 onPressed: () => _requestDealerChange(session, hand),
                 icon: const Icon(Icons.swap_horiz, color: AppTheme.gold),
                 label: Text(
-                  'Voglio fare il mazziere',
+                  AppLocalizations.of(context)!.wantToBeDealer,
                   style: GoogleFonts.lato(color: AppTheme.gold),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -720,14 +738,14 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Mazziere',
+                    AppLocalizations.of(context)!.dealer,
                     style: GoogleFonts.lato(
                       color: AppTheme.cream.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),
                   Text(
-                    dealerPlayer?.name ?? 'Nessuno',
+                    dealerPlayer?.name ?? AppLocalizations.of(context)!.none,
                     style: GoogleFonts.playfairDisplay(
                       color: AppTheme.gold,
                       fontSize: 24,
@@ -742,7 +760,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Piatto',
+                    AppLocalizations.of(context)!.pot,
                     style: GoogleFonts.lato(
                       color: AppTheme.cream.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -768,12 +786,6 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
   /// Vista per selezionare un nuovo mazziere
   Widget _buildSelectDealerView(GameSession session, ActiveHand hand) {
     final myPlayer = _getCurrentUserPlayer(session);
-    final isOneVsOne = hand.isSetteEMezzoOneVsOne;
-    
-    // Messaggio diverso se è la prima volta o se il piatto è esaurito
-    final subtitle = isOneVsOne 
-        ? 'Un giocatore deve dichiararsi mazziere e impostare il piatto.'
-        : 'Un giocatore deve dichiararsi mazziere per iniziare la mano.';
     
     return Center(
       child: Padding(
@@ -793,7 +805,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               .scale(),
             const SizedBox(height: 24),
             Text(
-              'Chi fa il mazziere?',
+              AppLocalizations.of(context)!.whoIsDealer,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -803,7 +815,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               .fadeIn(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 12),
             Text(
-              subtitle,
+              AppLocalizations.of(context)!.playerMustDeclareDealer,
               style: GoogleFonts.lato(
                 fontSize: 14,
                 color: AppTheme.cream.withValues(alpha: 0.7),
@@ -816,7 +828,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               ElevatedButton.icon(
                 onPressed: () => _becomeDealer(session, hand, myPlayer.id),
                 icon: const Icon(Icons.casino),
-                label: const Text('Faccio io il mazziere!'),
+                label: Text(AppLocalizations.of(context)!.imTheDealer),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
@@ -852,7 +864,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 .scale(),
               const SizedBox(height: 24),
               Text(
-                'In attesa del mazziere',
+                AppLocalizations.of(context)!.waitingForDealer,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -870,13 +882,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                   ),
                   children: [
                     TextSpan(
-                      text: dealerPlayer?.name ?? 'Il mazziere',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.gold,
+                      text: AppLocalizations.of(context)!.dealerSettingPot(dealerPlayer?.name ?? AppLocalizations.of(context)!.dealer),
                       ),
-                    ),
-                    const TextSpan(text: ' sta impostando il piatto...'),
                   ],
                 ),
               ).animate()
@@ -906,7 +913,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               .scale(),
             const SizedBox(height: 24),
             Text(
-              'Imposta il Piatto',
+              AppLocalizations.of(context)!.setPot,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -916,7 +923,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               .fadeIn(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 12),
             Text(
-              'Sei il mazziere! Quanto metti nel piatto?',
+              AppLocalizations.of(context)!.youAreDealer,
               style: GoogleFonts.lato(
                 fontSize: 14,
                 color: AppTheme.cream.withValues(alpha: 0.7),
@@ -953,6 +960,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                         border: InputBorder.none,
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    AmountKeypad(controller: _amountController),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
@@ -966,15 +975,15 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                             _amountController.clear();
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Inserisci un importo valido maggiore di 0'),
+                              SnackBar(
+                                content: Text(AppLocalizations.of(context)!.enterValidAmountGreaterThan0),
                                 backgroundColor: AppTheme.accentRed,
                               ),
                             );
                           }
                         },
                         icon: const Icon(Icons.check),
-                        label: const Text('Conferma Piatto'),
+                        label: Text(AppLocalizations.of(context)!.confirmPot),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
@@ -1022,10 +1031,8 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                       style: GoogleFonts.lato(color: AppTheme.cream),
                       children: [
                         TextSpan(
-                          text: requestingPlayer.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.gold),
+                          text: AppLocalizations.of(context)!.wantsToBeDealer(requestingPlayer.name),
                         ),
-                        const TextSpan(text: ' vuole diventare mazziere'),
                       ],
                     ),
                   ),
@@ -1043,7 +1050,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                         foregroundColor: AppTheme.accentRed,
                         side: const BorderSide(color: AppTheme.accentRed),
                       ),
-                      child: const Text('Rifiuta'),
+                      child: Text(AppLocalizations.of(context)!.reject),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1054,7 +1061,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                         backgroundColor: AppTheme.gold,
                         foregroundColor: AppTheme.darkGreen,
                       ),
-                      child: const Text('Accetta'),
+                      child: Text(AppLocalizations.of(context)!.accept),
                     ),
                   ),
                 ],
@@ -1063,7 +1070,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'Il piatto (${_currencyFormat.format(hand.dealerPot)}) ti verrà assegnato',
+                    AppLocalizations.of(context)!.potWillBeAssigned(_currencyFormat.format(hand.dealerPot)),
                     style: GoogleFonts.lato(
                       color: AppTheme.gold,
                       fontSize: 12,
@@ -1089,7 +1096,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               Icon(Icons.hourglass_empty, size: 40, color: AppTheme.cream.withValues(alpha: 0.5)),
               const SizedBox(height: 12),
               Text(
-                'Nessuna puntata ancora',
+                AppLocalizations.of(context)!.noBetsYet,
                 style: GoogleFonts.lato(
                   color: AppTheme.cream.withValues(alpha: 0.7),
                 ),
@@ -1107,7 +1114,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Puntate',
+              AppLocalizations.of(context)!.bets,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -1165,7 +1172,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Gestione Mazziere',
+              AppLocalizations.of(context)!.dealerManagement,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1177,7 +1184,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
             // Lista giocatori con puntate per gestire pagamenti
             if (hand.currentPhaseBets.isNotEmpty) ...[
               Text(
-                'Decidi per ogni giocatore:',
+                AppLocalizations.of(context)!.decideForEachPlayer,
                 style: GoogleFonts.lato(
                   color: AppTheme.cream.withValues(alpha: 0.7),
                   fontSize: 14,
@@ -1219,7 +1226,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: () => _dealerPayPlayer(session, hand, entry.key, entry.value),
                                 icon: const Icon(Icons.arrow_upward, size: 16, color: AppTheme.accentRed),
-                                label: Text('Paga', style: GoogleFonts.lato(fontSize: 12, color: AppTheme.accentRed)),
+                                label: Text(AppLocalizations.of(context)!.pay, style: GoogleFonts.lato(fontSize: 12, color: AppTheme.accentRed)),
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(color: AppTheme.accentRed),
                                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1231,7 +1238,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                               child: ElevatedButton.icon(
                                 onPressed: () => _dealerTakeFromPlayer(session, hand, entry.key, entry.value),
                                 icon: const Icon(Icons.arrow_downward, size: 16),
-                                label: Text('Prendi', style: GoogleFonts.lato(fontSize: 12)),
+                                label: Text(AppLocalizations.of(context)!.take, style: GoogleFonts.lato(fontSize: 12)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.gold,
                                   foregroundColor: AppTheme.darkGreen,
@@ -1259,7 +1266,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                     : null,
                 icon: const Icon(Icons.close, color: AppTheme.accentRed),
                 label: Text(
-                  'Ho sballato! Pago tutti',
+                  AppLocalizations.of(context)!.iBustedPayAll,
                   style: GoogleFonts.lato(color: AppTheme.accentRed),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -1286,7 +1293,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
             Row(
               children: [
                 Text(
-                  'La tua puntata',
+                  AppLocalizations.of(context)!.yourBet,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1322,7 +1329,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                     decoration: InputDecoration(
                       prefixText: '€ ',
                       prefixStyle: GoogleFonts.lato(color: AppTheme.gold),
-                      hintText: 'Importo',
+                      hintText: AppLocalizations.of(context)!.amountPlaceholder,
                       hintStyle: GoogleFonts.lato(color: AppTheme.gold.withValues(alpha: 0.3)),
                     ),
                   ),
@@ -1337,10 +1344,12 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                     }
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('Punta'),
+                  label: Text(AppLocalizations.of(context)!.bet),
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            AmountKeypad(controller: _amountController),
           ],
         ),
       ),
@@ -1355,7 +1364,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Le tue azioni',
+              AppLocalizations.of(context)!.yourActions,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -1370,10 +1379,12 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
               decoration: InputDecoration(
                 prefixText: '€ ',
                 prefixStyle: GoogleFonts.lato(color: AppTheme.gold),
-                hintText: 'Importo',
+                hintText: AppLocalizations.of(context)!.amountPlaceholder,
                 hintStyle: GoogleFonts.lato(color: AppTheme.gold.withValues(alpha: 0.3)),
               ),
             ),
+            const SizedBox(height: 12),
+            AmountKeypad(controller: _amountController),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -1387,7 +1398,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                       }
                     },
                     icon: const Icon(Icons.arrow_upward, color: AppTheme.accentRed),
-                    label: Text('Pago', style: GoogleFonts.lato(color: AppTheme.accentRed)),
+                    label: Text(AppLocalizations.of(context)!.iPay, style: GoogleFonts.lato(color: AppTheme.accentRed)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppTheme.accentRed),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1405,7 +1416,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                       }
                     },
                     icon: const Icon(Icons.arrow_downward),
-                    label: const Text('Chiedo'),
+                    label: Text(AppLocalizations.of(context)!.iRequest),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.gold,
                       foregroundColor: AppTheme.darkGreen,
@@ -1417,7 +1428,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '💡 "Chiedo" richiede conferma dal mazziere',
+              AppLocalizations.of(context)!.requestNeedsConfirmation,
               style: GoogleFonts.lato(
                 color: AppTheme.cream.withValues(alpha: 0.5),
                 fontSize: 12,
@@ -1444,7 +1455,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                 const Icon(Icons.pending_actions, color: AppTheme.gold),
                 const SizedBox(width: 8),
                 Text(
-                  'Richieste in attesa',
+                  AppLocalizations.of(context)!.pendingRequests,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1471,16 +1482,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                                 style: GoogleFonts.lato(color: AppTheme.cream),
                                 children: [
                                   TextSpan(
-                                    text: player.name,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  const TextSpan(text: ' chiede '),
-                                  TextSpan(
-                                    text: _currencyFormat.format(payment.amount),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.gold,
-                                    ),
+                                    text: AppLocalizations.of(context)!.requests(player.name, _currencyFormat.format(payment.amount)),
                                   ),
                                 ],
                               ),
@@ -1498,7 +1500,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                                 foregroundColor: AppTheme.accentRed,
                                 side: const BorderSide(color: AppTheme.accentRed),
                               ),
-                              child: const Text('Rifiuta'),
+                              child: Text(AppLocalizations.of(context)!.reject),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -1511,7 +1513,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                                 backgroundColor: AppTheme.gold,
                                 foregroundColor: AppTheme.darkGreen,
                               ),
-                              child: const Text('Conferma'),
+                              child: Text(AppLocalizations.of(context)!.confirm),
                             ),
                           ),
                         ],
@@ -1520,7 +1522,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            'Piatto insufficiente!',
+                            AppLocalizations.of(context)!.insufficientPot,
                             style: GoogleFonts.lato(
                               color: AppTheme.accentRed,
                               fontSize: 12,
@@ -1541,27 +1543,27 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
   void _showEndHandDialog(GameSession session) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Text(
-          'Terminare la mano?',
+          AppLocalizations.of(context)!.terminateHand,
           style: GoogleFonts.playfairDisplay(color: AppTheme.gold),
         ),
         content: Text(
-          'Sei sicuro di voler terminare la mano corrente?',
+          AppLocalizations.of(context)!.terminateHandConfirm,
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Annulla', style: GoogleFonts.lato(color: AppTheme.cream)),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppLocalizations.of(context)!.cancel, style: GoogleFonts.lato(color: AppTheme.cream)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               _endHand(session);
             },
-            child: const Text('Termina'),
+            child: Text(AppLocalizations.of(context)!.terminate),
           ),
         ],
       ),
@@ -1571,7 +1573,7 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
   void _showCancelHandDialog(GameSession session, ActiveHand hand) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Row(
           children: [
@@ -1579,30 +1581,30 @@ class _SetteEMezzoScreenState extends State<SetteEMezzoScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Annullare la mano?',
+                AppLocalizations.of(context)!.cancelHandQuestion,
                 style: GoogleFonts.playfairDisplay(color: AppTheme.accentRed),
               ),
             ),
           ],
         ),
         content: Text(
-          'Questa azione annullerà la mano corrente e TUTTI i movimenti economici effettuati durante questa mano verranno eliminati.\n\nLa situazione economica tornerà allo stato precedente.',
+          AppLocalizations.of(context)!.cancelHandWarning,
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('No, mantieni', style: GoogleFonts.lato(color: AppTheme.cream)),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppLocalizations.of(context)!.noKeepIt, style: GoogleFonts.lato(color: AppTheme.cream)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               _cancelHand(session, hand);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentRed,
             ),
-            child: const Text('Sì, annulla mano'),
+            child: Text(AppLocalizations.of(context)!.yesCancelHand),
           ),
         ],
       ),

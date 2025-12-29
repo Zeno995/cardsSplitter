@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../models/player.dart';
 import '../models/game_mode.dart';
@@ -11,14 +12,20 @@ import '../models/game_hand.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/amount_keypad.dart';
 import 'sette_e_mezzo_screen.dart';
 import 'trentuno_cucu_screen.dart';
 import 'bestia_screen.dart';
 
 class PlayHandScreen extends StatefulWidget {
   final String sessionId;
+  final GameMode? initialGameMode;
 
-  const PlayHandScreen({super.key, required this.sessionId});
+  const PlayHandScreen({
+    super.key,
+    required this.sessionId,
+    this.initialGameMode,
+  });
 
   @override
   State<PlayHandScreen> createState() => _PlayHandScreenState();
@@ -39,7 +46,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
   List<BetPhaseConfig> _getPhases(GameType type) => GameBetPhases.getPhases(type);
   List<WinnerTypeConfig> _getWinnerTypes(GameType type) => GameBetPhases.getWinnerTypes(type);
 
-  Future<void> _startNewHand(GameSession session) async {
+  Future<void> _startNewHand(GameSession session, GameMode gameMode) async {
     final dbService = context.read<DatabaseService>();
     final authService = context.read<AuthService>();
     
@@ -54,7 +61,8 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
 
     final hand = ActiveHand(
       id: _uuid.v4(),
-      gameType: session.gameMode.type,
+      gameType: gameMode.type,
+      variantId: gameMode.variantId,
       createdAt: DateTime.now(),
       createdBy: authService.currentUser?.uid ?? 'anonymous',
       currentPhaseIndex: 0,
@@ -261,8 +269,8 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mano completata!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.handCompleted),
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
@@ -285,8 +293,8 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mano annullata! Tutti i movimenti sono stati rimossi.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.handCancelledMovementsRemoved),
           backgroundColor: AppTheme.gold,
         ),
       );
@@ -294,24 +302,25 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
   }
 
   String _getWinnerDescription(GameType gameType, HandWinner winner) {
+    final l10n = AppLocalizations.of(context)!;
     final gameMode = GameMode(type: gameType);
     switch (winner.type) {
       case WinnerType.lasVegasHigh:
-        return '${gameMode.displayName} - Punteggio Alto';
+        return '${gameMode.getDisplayName(context)} - ${l10n.highScore}';
       case WinnerType.lasVegasLow:
-        return '${gameMode.displayName} - Punteggio Basso';
+        return '${gameMode.getDisplayName(context)} - ${l10n.lowScore}';
       case WinnerType.lasVegasFull:
-        return '${gameMode.displayName} - Las Vegas!';
+        return '${gameMode.getDisplayName(context)} - ${l10n.lasVegasFull}';
       case WinnerType.setteEMezzoReale:
-        return '${gameMode.displayName} - Sette e Mezzo Reale';
+        return '${gameMode.getDisplayName(context)} - ${l10n.setteEMezzoReale}';
       case WinnerType.trentuno31:
-        return '${gameMode.displayName} - Trentuno!';
+        return '${gameMode.getDisplayName(context)} - ${l10n.trentunoWin}';
       case WinnerType.cucuLoser:
-        return '${gameMode.displayName} - Perdente';
+        return '${gameMode.getDisplayName(context)} - ${l10n.cucuLoser}';
       case WinnerType.bestiaPay:
-        return '${gameMode.displayName} - In Bestia';
+        return '${gameMode.getDisplayName(context)} - ${l10n.bestiaPay}';
       default:
-        return '${gameMode.displayName} - Vincita';
+        return '${gameMode.getDisplayName(context)} - ${l10n.standardWin}';
     }
   }
 
@@ -364,7 +373,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                     const Icon(Icons.error_outline, size: 60, color: AppTheme.accentRed),
                     const SizedBox(height: 16),
                     Text(
-                      'Sessione non trovata',
+                      AppLocalizations.of(context)!.sessionNotFound,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 20,
                         color: AppTheme.cream,
@@ -373,7 +382,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                     const SizedBox(height: 24),
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Torna indietro'),
+                      child: Text(AppLocalizations.of(context)!.goBack),
                     ),
                   ],
                 ),
@@ -382,32 +391,46 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
           );
         }
 
+        final hand = session.activeHand;
+        
+        // Determina il gameMode: dalla mano attiva se esiste, altrimenti da initialGameMode
+        final gameMode = hand != null 
+            ? GameMode(type: hand.gameType, variantId: hand.variantId)
+            : widget.initialGameMode ?? const GameMode(type: GameType.libera);
+
         // Redirect a schermate specifiche per giochi con logica custom
-        if (session.gameMode.type == GameType.setteEMezzo) {
-          return SetteEMezzoScreen(sessionId: widget.sessionId);
+        if (gameMode.type == GameType.setteEMezzo) {
+          return SetteEMezzoScreen(
+            sessionId: widget.sessionId,
+            initialGameMode: gameMode,
+          );
         }
 
         // Redirect per giochi con vite (31 e Cucù)
-        if (session.gameMode.type == GameType.trentuno ||
-            session.gameMode.type == GameType.cucu) {
-          return TrentunoCucuScreen(sessionId: widget.sessionId);
+        if (gameMode.type == GameType.trentuno ||
+            gameMode.type == GameType.cucu) {
+          return TrentunoCucuScreen(
+            sessionId: widget.sessionId,
+            initialGameMode: gameMode,
+          );
         }
 
         // Redirect per Bestia
-        if (session.gameMode.type == GameType.bestia) {
-          return BestiaScreen(sessionId: widget.sessionId);
+        if (gameMode.type == GameType.bestia) {
+          return BestiaScreen(
+            sessionId: widget.sessionId,
+            initialGameMode: gameMode,
+          );
         }
-
-        final hand = session.activeHand;
-        final gameMode = session.gameMode;
         final currencyFormat = NumberFormat.currency(locale: 'it_IT', symbol: '€');
         final isAdmin = _isAdmin(session);
 
         // Se non c'è una mano attiva, mostra l'opzione per iniziarne una
+        final l10n = AppLocalizations.of(context)!;
         if (hand == null) {
           return Scaffold(
             appBar: AppBar(
-              title: Text('${gameMode.icon} ${gameMode.displayName}'),
+              title: Text('${gameMode.icon} ${gameMode.getDisplayName(context)}'),
             ),
             body: ChristmasBackground(
               child: Center(
@@ -424,7 +447,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                         .scale(),
                       const SizedBox(height: 24),
                       Text(
-                        'Pronto per giocare?',
+                        l10n.readyToPlay,
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -435,8 +458,8 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                       const SizedBox(height: 12),
                       Text(
                         isAdmin 
-                            ? 'Inizia una nuova mano quando tutti sono pronti'
-                            : 'Aspetta che l\'admin inizi la mano...',
+                            ? l10n.startHandWhenReady
+                            : l10n.waitForAdminToStart,
                         style: GoogleFonts.lato(
                           fontSize: 16,
                           color: AppTheme.cream.withValues(alpha: 0.7),
@@ -447,9 +470,9 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                       const SizedBox(height: 32),
                       if (isAdmin)
                         ElevatedButton.icon(
-                          onPressed: () => _startNewHand(session),
+                          onPressed: () => _startNewHand(session, gameMode),
                           icon: const Icon(Icons.play_arrow),
-                          label: const Text('Inizia Mano'),
+                          label: Text(l10n.startHand),
                         ).animate()
                           .fadeIn(delay: 600.ms, duration: 400.ms),
                     ],
@@ -466,7 +489,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('${gameMode.icon} ${gameMode.displayName}'),
+            title: Text('${gameMode.icon} ${gameMode.getDisplayName(context)}'),
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -478,7 +501,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Piatto: ${currencyFormat.format(hand.totalPot)}',
+                      '${l10n.pot}: ${currencyFormat.format(hand.totalPot)}',
                       style: GoogleFonts.lato(
                         color: AppTheme.gold,
                         fontWeight: FontWeight.bold,
@@ -491,12 +514,12 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                 IconButton(
                   onPressed: () => _showCancelHandDialog(session, hand),
                   icon: const Icon(Icons.undo, color: AppTheme.accentRed),
-                  tooltip: 'Annulla Mano',
+                  tooltip: l10n.cancelHand,
                 ),
                 IconButton(
                   onPressed: () => _showAdminPanel(session, hand),
                   icon: const Icon(Icons.admin_panel_settings),
-                  tooltip: 'Pannello Admin',
+                  tooltip: l10n.adminPanel,
                 ),
               ],
             ],
@@ -505,7 +528,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
             child: phases.isEmpty
                 ? _buildFreeMode()
                 : isPokerStyle
-                    ? _buildPokerStyleView(session, hand, phases)
+                    ? _buildPokerStyleView(session, hand, phases, gameMode)
                     : _buildSimplePhase(session, hand, phases),
           ),
         );
@@ -526,7 +549,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
               .scale(),
             const SizedBox(height: 24),
             Text(
-              'Modalità Libera',
+              AppLocalizations.of(context)!.freeMode,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -536,7 +559,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
               .fadeIn(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 12),
             Text(
-              'In questa modalità, usa il pulsante "Movimento" per registrare manualmente chi paga e chi riceve.',
+              AppLocalizations.of(context)!.freeModeDescription,
               style: GoogleFonts.lato(
                 fontSize: 16,
                 color: AppTheme.cream.withValues(alpha: 0.7),
@@ -548,7 +571,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
             OutlinedButton.icon(
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Torna alla sessione'),
+              label: Text(AppLocalizations.of(context)!.backToSession),
             ).animate()
               .fadeIn(delay: 600.ms, duration: 400.ms),
           ],
@@ -557,7 +580,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
     );
   }
 
-  Widget _buildPokerStyleView(GameSession session, ActiveHand hand, List<BetPhaseConfig> phases) {
+  Widget _buildPokerStyleView(GameSession session, ActiveHand hand, List<BetPhaseConfig> phases, GameMode gameMode) {
     // Controlla se siamo oltre le fasi (assegnazione vincitori)
     if (hand.currentPhaseIndex >= phases.length) {
       return _buildAssignWinners(session, hand);
@@ -650,7 +673,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                 child: Column(
                   children: [
                     Text(
-                      isMyTurn ? 'Tocca a te!' : 'Tocca a:',
+                      isMyTurn ? AppLocalizations.of(context)!.yourTurn : AppLocalizations.of(context)!.turnOf,
                       style: GoogleFonts.lato(
                         color: isMyTurn ? AppTheme.gold : AppTheme.cream.withValues(alpha: 0.7),
                         fontSize: isMyTurn ? 18 : 14,
@@ -673,7 +696,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                     ] else ...[
                       const SizedBox(height: 16),
                       Text(
-                        'Aspetta il tuo turno...',
+                        AppLocalizations.of(context)!.waitYourTurn,
                         style: GoogleFonts.lato(
                           color: AppTheme.cream.withValues(alpha: 0.5),
                           fontStyle: FontStyle.italic,
@@ -696,14 +719,14 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
           ],
           
           // Admin: termina anticipatamente
-          if (isAdmin && session.gameMode.type == GameType.lasVegas)
+          if (isAdmin && gameMode.type == GameType.lasVegas)
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: TextButton.icon(
                 onPressed: () => _showEndHandDialog(session, hand),
                 icon: const Icon(Icons.star, color: AppTheme.gold),
                 label: Text(
-                  'Qualcuno ha fatto Las Vegas!',
+                  AppLocalizations.of(context)!.someoneMadeLasVegas,
                   style: GoogleFonts.lato(color: AppTheme.gold),
                 ),
               ),
@@ -723,7 +746,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
             Row(
               children: [
                 Text(
-                  'Giocatori',
+                  AppLocalizations.of(context)!.players,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -836,7 +859,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => _playerAction(session, hand, PlayerAction.fold),
                 icon: const Icon(Icons.close, color: AppTheme.accentRed),
-                label: Text('Lascia', style: GoogleFonts.lato(color: AppTheme.accentRed)),
+                label: Text(AppLocalizations.of(context)!.fold, style: GoogleFonts.lato(color: AppTheme.accentRed)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppTheme.accentRed),
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -849,7 +872,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                   ? ElevatedButton.icon(
                       onPressed: () => _playerAction(session, hand, PlayerAction.call),
                       icon: const Icon(Icons.check),
-                      label: Text('Vede ${currencyFormat.format(toCall)}'),
+                      label: Text(AppLocalizations.of(context)!.call(currencyFormat.format(toCall))),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -858,7 +881,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                   : OutlinedButton.icon(
                       onPressed: () => _playerAction(session, hand, PlayerAction.check),
                       icon: const Icon(Icons.check, color: Colors.blue),
-                      label: Text('Check', style: GoogleFonts.lato(color: Colors.blue)),
+                      label: Text(AppLocalizations.of(context)!.check, style: GoogleFonts.lato(color: Colors.blue)),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.blue),
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -884,8 +907,8 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                 ),
                 decoration: InputDecoration(
                   hintText: hand.currentBetToMatch > 0 
-                      ? 'Min: ${currencyFormat.format(hand.currentBetToMatch + 0.01)}'
-                      : 'Importo',
+                      ? AppLocalizations.of(context)!.minAmount(currencyFormat.format(hand.currentBetToMatch + 0.01))
+                      : AppLocalizations.of(context)!.amountPlaceholder,
                   hintStyle: GoogleFonts.lato(
                     color: AppTheme.gold.withValues(alpha: 0.3),
                     fontSize: 14,
@@ -915,7 +938,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'L\'importo deve essere maggiore di ${currencyFormat.format(hand.currentBetToMatch)}',
+                        AppLocalizations.of(context)!.amountMustBeGreater(currencyFormat.format(hand.currentBetToMatch)),
                       ),
                       backgroundColor: AppTheme.accentRed,
                     ),
@@ -923,7 +946,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                 }
               },
               icon: const Icon(Icons.arrow_upward),
-              label: Text(hand.currentBetToMatch > 0 ? 'Rilancia' : 'Punta'),
+              label: Text(hand.currentBetToMatch > 0 ? AppLocalizations.of(context)!.raise : AppLocalizations.of(context)!.bet),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.gold,
                 foregroundColor: AppTheme.darkGreen,
@@ -932,6 +955,8 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        AmountKeypad(controller: _betAmountController),
       ],
     );
   }
@@ -963,7 +988,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Tu (${myPlayer.name})',
+                    '${AppLocalizations.of(context)!.you} (${myPlayer.name})',
                     style: GoogleFonts.lato(
                       color: AppTheme.cream,
                       fontWeight: FontWeight.bold,
@@ -995,17 +1020,18 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
   }
 
   String _getStatusText(String status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case 'waiting':
-        return 'In attesa...';
+        return l10n.waiting;
       case 'checked':
-        return 'Hai fatto check';
+        return l10n.youChecked;
       case 'called':
-        return 'Hai visto';
+        return l10n.youCalled;
       case 'raised':
-        return 'Hai rilanciato';
+        return l10n.youRaised;
       case 'folded':
-        return 'Hai lasciato';
+        return l10n.youFolded;
       default:
         return '';
     }
@@ -1045,7 +1071,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
               const Icon(Icons.hourglass_empty, size: 60, color: AppTheme.gold),
               const SizedBox(height: 24),
               Text(
-                'In attesa dell\'admin',
+                AppLocalizations.of(context)!.waitingForAdmin,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -1054,7 +1080,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'L\'amministratore sta gestendo le puntate...',
+                AppLocalizations.of(context)!.adminManagingBets,
                 style: GoogleFonts.lato(
                   color: AppTheme.cream.withValues(alpha: 0.7),
                 ),
@@ -1083,7 +1109,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
               const Icon(Icons.emoji_events, size: 60, color: AppTheme.gold),
               const SizedBox(height: 24),
               Text(
-                'Mano terminata!',
+                AppLocalizations.of(context)!.handFinished,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -1092,7 +1118,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'L\'amministratore sta assegnando i vincitori...',
+                AppLocalizations.of(context)!.adminAssigningWinners,
                 style: GoogleFonts.lato(
                   color: AppTheme.cream.withValues(alpha: 0.7),
                 ),
@@ -1151,20 +1177,20 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Annullare la mano?',
+                AppLocalizations.of(context)!.cancelHandQuestion,
                 style: GoogleFonts.playfairDisplay(color: AppTheme.accentRed),
               ),
             ),
           ],
         ),
         content: Text(
-          'Questa azione annullerà la mano corrente e TUTTI i movimenti economici effettuati durante questa mano verranno eliminati.\n\nLa situazione economica tornerà allo stato precedente.',
+          AppLocalizations.of(context)!.cancelHandWarning,
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('No, mantieni', style: GoogleFonts.lato(color: AppTheme.cream)),
+            child: Text(AppLocalizations.of(context)!.noKeepIt, style: GoogleFonts.lato(color: AppTheme.cream)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1174,7 +1200,7 @@ class _PlayHandScreenState extends State<PlayHandScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentRed,
             ),
-            child: const Text('Sì, annulla mano'),
+            child: Text(AppLocalizations.of(context)!.yesCancelHand),
           ),
         ],
       ),
@@ -1272,7 +1298,7 @@ class _AdminPanelSheetState extends State<_AdminPanelSheet> {
             ),
             
             Text(
-              'Pannello Admin',
+              AppLocalizations.of(context)!.adminPanel,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1295,7 +1321,7 @@ class _AdminPanelSheetState extends State<_AdminPanelSheet> {
                         const Icon(Icons.swap_vert, color: AppTheme.gold),
                         const SizedBox(width: 8),
                         Text(
-                          'Ordine Giocatori',
+                          AppLocalizations.of(context)!.playerOrder,
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1361,7 +1387,7 @@ class _AdminPanelSheetState extends State<_AdminPanelSheet> {
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () => widget.onReorder(_order),
-                      child: const Text('Applica Ordine'),
+                      child: Text(AppLocalizations.of(context)!.applyOrder),
                     ),
                   ],
                 ),
@@ -1383,7 +1409,7 @@ class _AdminPanelSheetState extends State<_AdminPanelSheet> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Termina Mano',
+                            AppLocalizations.of(context)!.endHand,
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -1397,7 +1423,7 @@ class _AdminPanelSheetState extends State<_AdminPanelSheet> {
                     ElevatedButton.icon(
                       onPressed: widget.onSkipToWinners,
                       icon: const Icon(Icons.emoji_events),
-                      label: const Text('Assegna Vincitori'),
+                      label: Text(AppLocalizations.of(context)!.assignWinners),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.gold,
                         foregroundColor: AppTheme.darkGreen,
@@ -1515,8 +1541,8 @@ class _EndHandSheetState extends State<_EndHandSheet> {
     if (winners.isEmpty) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Seleziona almeno un vincitore'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.selectAtLeastOneWinner),
           backgroundColor: AppTheme.accentRed,
         ),
       );
@@ -1548,7 +1574,7 @@ class _EndHandSheetState extends State<_EndHandSheet> {
           ],
           
           Text(
-            'Assegna Vincitori',
+            AppLocalizations.of(context)!.assignWinners,
             style: GoogleFonts.playfairDisplay(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -1566,7 +1592,7 @@ class _EndHandSheetState extends State<_EndHandSheet> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              'Piatto Totale: ${currencyFormat.format(widget.hand.totalPot)}',
+              AppLocalizations.of(context)!.totalPot(currencyFormat.format(widget.hand.totalPot)),
               style: GoogleFonts.lato(
                 color: AppTheme.gold,
                 fontWeight: FontWeight.bold,
@@ -1594,7 +1620,7 @@ class _EndHandSheetState extends State<_EndHandSheet> {
                     ),
                   )
                 : const Icon(Icons.check),
-            label: Text(_isLoading ? 'Salvataggio...' : 'Conferma e Chiudi Mano'),
+            label: Text(_isLoading ? AppLocalizations.of(context)!.saving : AppLocalizations.of(context)!.confirmAndCloseHand),
           ),
         ],
       ),

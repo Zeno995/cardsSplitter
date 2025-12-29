@@ -5,15 +5,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../models/player.dart';
 import '../models/game_mode.dart';
+import '../models/movement.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import 'add_movement_screen.dart';
 import 'settlements_screen.dart';
 import 'play_hand_screen.dart';
+import 'select_game_mode_screen.dart';
 
 class SessionDetailScreen extends StatefulWidget {
   final String sessionId;
@@ -80,6 +83,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
   }
 
   void _showReplacedDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -90,13 +94,13 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
             const Icon(Icons.swap_horiz, color: AppTheme.gold),
             const SizedBox(width: 12),
             Text(
-              'Posto preso',
+              l10n.spotTaken,
               style: GoogleFonts.playfairDisplay(color: AppTheme.cream),
             ),
           ],
         ),
         content: Text(
-          'Un altro utente ha preso il tuo posto in questa sessione. Verrai reindirizzato alla home.',
+          l10n.anotherUserTookYourSpot,
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
@@ -105,7 +109,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
               Navigator.of(context).pop();
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
-            child: const Text('OK'),
+            child: Text(l10n.ok),
           ),
         ],
       ),
@@ -113,128 +117,69 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
   }
 
   void _shareSession(GameSession session) {
-    final shareText = 'Unisciti alla sessione "${session.name}"!\n\n'
-        'Codice: ${session.shareCode}\n\n'
-        'Usa questo codice nell\'app Cards Splitter per entrare.';
+    final l10n = AppLocalizations.of(context)!;
+    final shareText = l10n.joinSessionText(session.name, session.shareCode);
     
     Share.share(shareText);
   }
 
   void _copyCode(String code) {
+    final l10n = AppLocalizations.of(context)!;
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Codice copiato!'),
+      SnackBar(
+        content: Text(l10n.codeCopied),
         backgroundColor: AppTheme.primaryGreen,
       ),
     );
   }
 
-  void _showGameModeRules(GameMode mode) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.primaryGreen,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.cream.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    mode.icon,
-                    style: const TextStyle(fontSize: 32),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          mode.displayName,
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.gold,
-                          ),
-                        ),
-                        if (mode.variantDisplayName != null)
-                          Text(
-                            'Variante: ${mode.variantDisplayName}',
-                            style: GoogleFonts.lato(
-                              fontSize: 14,
-                              color: AppTheme.cream.withValues(alpha: 0.7),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: AppTheme.cream),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  child: Text(
-                    mode.fullRules,
-                    style: GoogleFonts.lato(
-                      fontSize: 15,
-                      color: AppTheme.cream,
-                      height: 1.6,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+  Future<void> _startNewHand(GameSession session) async {
+    // Mostra la selezione del gioco
+    final selectedGameMode = await Navigator.push<GameMode>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SelectGameModeScreen(),
       ),
     );
+    
+    if (selectedGameMode != null && mounted) {
+      // Naviga alla schermata di gioco con la modalità selezionata
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PlayHandScreen(
+            sessionId: session.id,
+            initialGameMode: selectedGameMode,
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _deleteSession(GameSession session) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Text(
-          'Elimina sessione',
+          l10n.deleteSession,
           style: GoogleFonts.playfairDisplay(color: AppTheme.cream),
         ),
         content: Text(
-          'Sei sicuro di voler eliminare "${session.name}"?\nQuesta azione non può essere annullata.',
+          l10n.deleteSessionConfirm(session.name),
           style: GoogleFonts.lato(color: AppTheme.cream),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Annulla', style: GoogleFonts.lato(color: AppTheme.gold)),
+            child: Text(l10n.cancel, style: GoogleFonts.lato(color: AppTheme.gold)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentRed),
-            child: const Text('Elimina'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -251,6 +196,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final authService = context.watch<AuthService>();
     final dbService = context.read<DatabaseService>();
     final userId = authService.currentUser?.uid;
@@ -279,7 +225,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                     const Icon(Icons.error_outline, size: 60, color: AppTheme.accentRed),
                     const SizedBox(height: 16),
                     Text(
-                      'Sessione non trovata',
+                      l10n.sessionNotFound,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 20,
                         color: AppTheme.cream,
@@ -288,7 +234,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                     const SizedBox(height: 24),
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Torna indietro'),
+                      child: Text(l10n.goBack),
                     ),
                   ],
                 ),
@@ -310,7 +256,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
               IconButton(
                 onPressed: () => _shareSession(session),
                 icon: const Icon(Icons.share),
-                tooltip: 'Condividi',
+                tooltip: l10n.share,
               ),
               if (isAdmin)
                 PopupMenuButton<String>(
@@ -329,7 +275,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                           const Icon(Icons.delete, color: AppTheme.accentRed),
                           const SizedBox(width: 8),
                           Text(
-                            'Elimina sessione',
+                            l10n.deleteSession,
                             style: GoogleFonts.lato(color: AppTheme.accentRed),
                           ),
                         ],
@@ -344,17 +290,17 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
               labelColor: AppTheme.gold,
               unselectedLabelColor: AppTheme.cream.withValues(alpha: 0.5),
               labelStyle: GoogleFonts.lato(fontWeight: FontWeight.bold),
-              tabs: const [
-                Tab(text: 'Bilanci'),
-                Tab(text: 'Movimenti'),
-                Tab(text: 'Giocatori'),
+              tabs: [
+                Tab(text: l10n.balances),
+                Tab(text: l10n.movements),
+                Tab(text: l10n.players),
               ],
             ),
           ),
           body: ChristmasBackground(
             child: Column(
               children: [
-                // Codice sessione e modalità gioco
+                // Codice sessione e mano attiva
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -365,54 +311,37 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                   ),
                   child: Column(
                     children: [
-                      // Modalità di gioco
-                      InkWell(
-                        onTap: () => _showGameModeRules(session.gameMode),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
+                      // Mano attiva (se presente)
+                      if (session.activeHand != null) ...[
+                        Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                session.gameMode.icon,
+                                GameMode(type: session.activeHand!.gameType).icon,
                                 style: const TextStyle(fontSize: 20),
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                session.gameMode.displayName,
+                                l10n.handInProgress(GameMode(type: session.activeHand!.gameType).getDisplayName(context)),
                                 style: GoogleFonts.playfairDisplay(
                                   color: AppTheme.gold,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              if (session.gameMode.variantDisplayName != null) ...[
-                                Text(
-                                  ' • ${session.gameMode.variantDisplayName}',
-                                  style: GoogleFonts.lato(
-                                    color: AppTheme.cream.withValues(alpha: 0.7),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: AppTheme.gold.withValues(alpha: 0.7),
-                              ),
                             ],
                           ),
                         ),
-                      ),
-                      Divider(color: AppTheme.gold.withValues(alpha: 0.2)),
+                        Divider(color: AppTheme.gold.withValues(alpha: 0.2)),
+                      ],
                       // Codice
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Codice: ',
+                            '${l10n.code}: ',
                             style: GoogleFonts.lato(color: AppTheme.cream.withValues(alpha: 0.7)),
                           ),
                           Text(
@@ -469,38 +398,45 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                       backgroundColor: AppTheme.gold,
                       foregroundColor: AppTheme.darkGreen,
                       icon: const Icon(Icons.calculate),
-                      label: const Text('Calcola'),
+                      label: Text(l10n.calculate),
                     ),
                     const SizedBox(height: 12),
-                    // Bottone per nuova mano (solo se non è modalità libera)
-                    if (session.gameMode.type != GameType.libera)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: FloatingActionButton.extended(
-                          heroTag: 'play',
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PlayHandScreen(sessionId: session.id),
+                    // Bottone per nuova mano o mano in corso
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: session.activeHand != null
+                          // Mano in corso - continua
+                          ? FloatingActionButton.extended(
+                              heroTag: 'play',
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PlayHandScreen(
+                                    sessionId: session.id,
+                                    initialGameMode: GameMode(type: session.activeHand!.gameType),
+                                  ),
+                                ),
+                              ),
+                              backgroundColor: AppTheme.gold,
+                              foregroundColor: AppTheme.darkGreen,
+                              icon: Text(
+                                GameMode(type: session.activeHand!.gameType).icon,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                              label: Text(l10n.currentHand),
+                            )
+                          // Nuova mano - scegli gioco
+                          : FloatingActionButton.extended(
+                              heroTag: 'play',
+                              onPressed: () => _startNewHand(session),
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: AppTheme.cream,
+                              icon: const Icon(Icons.play_arrow),
+                              label: Text(l10n.newHand),
                             ),
-                          ),
-                          backgroundColor: session.activeHand != null 
-                              ? AppTheme.gold 
-                              : AppTheme.primaryGreen,
-                          foregroundColor: session.activeHand != null 
-                              ? AppTheme.darkGreen 
-                              : AppTheme.cream,
-                          icon: Text(
-                            session.gameMode.icon,
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          label: Text(session.activeHand != null 
-                              ? 'Mano in Corso' 
-                              : 'Gioca Mano'),
-                        ),
-                      ),
+                    ),
                     // Movimento manuale (sempre disponibile per admin)
-                    if (isAdmin || session.gameMode.type == GameType.libera)
+                    if (isAdmin)
                       FloatingActionButton.extended(
                         heroTag: 'add',
                         onPressed: () => Navigator.push(
@@ -514,7 +450,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                           ),
                         ),
                         icon: const Icon(Icons.add),
-                        label: const Text('Movimento'),
+                        label: Text(l10n.movement),
                       ),
                   ],
                 ).animate()
@@ -534,6 +470,7 @@ class _BalancesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final balances = session.calculateBalances();
     final sortedPlayers = session.players.toList()
       ..sort((a, b) {
@@ -545,7 +482,7 @@ class _BalancesTab extends StatelessWidget {
     if (sortedPlayers.isEmpty) {
       return Center(
         child: Text(
-          'Nessun giocatore',
+          l10n.noPlayers,
           style: GoogleFonts.lato(color: AppTheme.cream.withValues(alpha: 0.5)),
         ),
       );
@@ -626,7 +563,7 @@ class _BalancesTab extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        isPositive ? 'Deve ricevere' : 'Deve dare',
+                        isPositive ? l10n.mustReceive : l10n.mustGive,
                         style: GoogleFonts.lato(
                           fontSize: 12,
                           color: AppTheme.cream.withValues(alpha: 0.5),
@@ -646,9 +583,9 @@ class _BalancesTab extends StatelessWidget {
               ],
             ),
           ),
-        ).animate(delay: Duration(milliseconds: 50 * index))
-          .fadeIn(duration: 300.ms)
-          .slideX(begin: 0.1, end: 0);
+        ).animate()
+          .fadeIn(duration: 200.ms)
+          .slideX(begin: 0.05, end: 0);
       },
     );
   }
@@ -662,6 +599,7 @@ class _MovementsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final movements = session.movements.toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -677,7 +615,7 @@ class _MovementsTab extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Nessun movimento',
+              l10n.noMovements,
               style: GoogleFonts.lato(color: AppTheme.cream.withValues(alpha: 0.5)),
             ),
           ],
@@ -693,8 +631,9 @@ class _MovementsTab extends StatelessWidget {
       itemCount: movements.length,
       itemBuilder: (context, index) {
         final movement = movements[index];
-        final fromName = session.getPlayerName(movement.fromPlayerId) ?? '?';
-        final toName = session.getPlayerName(movement.toPlayerId) ?? '?';
+        final fromName = _getDisplayName(movement.fromPlayerId, session);
+        final toName = _getDisplayName(movement.toPlayerId, session);
+        final gameTag = _getGameTag(movement);
 
         return Dismissible(
           key: Key(movement.id),
@@ -711,22 +650,22 @@ class _MovementsTab extends StatelessWidget {
               builder: (context) => AlertDialog(
                 backgroundColor: AppTheme.primaryGreen,
                 title: Text(
-                  'Elimina movimento',
+                  l10n.deleteMovement,
                   style: GoogleFonts.playfairDisplay(color: AppTheme.cream),
                 ),
                 content: Text(
-                  'Vuoi eliminare questo movimento?',
+                  l10n.deleteMovementConfirm,
                   style: GoogleFonts.lato(color: AppTheme.cream),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: Text('Annulla', style: GoogleFonts.lato(color: AppTheme.gold)),
+                    child: Text(l10n.cancel, style: GoogleFonts.lato(color: AppTheme.gold)),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentRed),
-                    child: const Text('Elimina'),
+                    child: Text(l10n.delete),
                   ),
                 ],
               ),
@@ -798,22 +737,71 @@ class _MovementsTab extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  Text(
-                    dateFormat.format(movement.createdAt),
-                    style: GoogleFonts.lato(
-                      fontSize: 10,
-                      color: AppTheme.cream.withValues(alpha: 0.4),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        dateFormat.format(movement.createdAt),
+                        style: GoogleFonts.lato(
+                          fontSize: 10,
+                          color: AppTheme.cream.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      if (gameTag != null)
+                        Text(
+                          gameTag,
+                          style: GoogleFonts.lato(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.gold.withValues(alpha: 0.6),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ).animate(delay: Duration(milliseconds: 50 * index))
-            .fadeIn(duration: 300.ms)
-            .slideX(begin: 0.1, end: 0),
+          ).animate()
+            .fadeIn(duration: 200.ms)
+            .slideX(begin: 0.05, end: 0),
         );
       },
     );
+  }
+
+  /// Ottiene il nome da visualizzare per un player ID
+  String _getDisplayName(String playerId, GameSession session) {
+    switch (playerId) {
+      case '_bestia_pot_':
+        return 'Bestia';
+      case '_piatto_':
+        return 'Piatto';
+      case '_piatto_vita_':
+        return 'Piatto';
+      default:
+        return session.getPlayerName(playerId) ?? '?';
+    }
+  }
+
+  /// Ottiene il tag del gioco basandosi sulla descrizione del movimento
+  String? _getGameTag(Movement movement) {
+    final desc = movement.description;
+    if (desc == null || desc.isEmpty) return null;
+    
+    if (desc.contains('🦁') || desc.contains('Bestia')) {
+      return 'Bestia';
+    } else if (desc.contains('7½') || desc.contains('7️⃣') || desc.contains('Sette e mezzo')) {
+      return '7½';
+    } else if (desc.contains('🐦') || desc.contains('Cucù')) {
+      return 'Cucù';
+    } else if (desc.contains('3️⃣1️⃣') || desc.contains('31')) {
+      return '31';
+    } else if (desc.contains('🎰') || desc.contains('Las Vegas')) {
+      return 'Las Vegas';
+    } else if (desc.contains('🎴')) {
+      return 'Libera';
+    }
+    return null;
   }
 }
 
@@ -824,6 +812,7 @@ class _PlayersTab extends StatelessWidget {
   const _PlayersTab({required this.session, required this.isAdmin});
 
   Future<void> _generateJoinCode(BuildContext context, Player player) async {
+    final l10n = AppLocalizations.of(context)!;
     final dbService = context.read<DatabaseService>();
     
     try {
@@ -838,14 +827,14 @@ class _PlayersTab extends StatelessWidget {
           builder: (context) => AlertDialog(
             backgroundColor: AppTheme.primaryGreen,
             title: Text(
-              'Codice Invito Generato',
+              l10n.inviteCodeGenerated,
               style: GoogleFonts.playfairDisplay(color: AppTheme.cream),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Condividi questo codice per far entrare qualcuno direttamente come "${player.name}":',
+                  l10n.shareCodeToJoinAs(player.name),
                   style: GoogleFonts.lato(color: AppTheme.cream),
                 ),
                 const SizedBox(height: 16),
@@ -873,8 +862,8 @@ class _PlayersTab extends StatelessWidget {
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: joinCode));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Codice copiato!'),
+                            SnackBar(
+                              content: Text(l10n.codeCopied),
                               backgroundColor: AppTheme.primaryGreen,
                             ),
                           );
@@ -888,7 +877,7 @@ class _PlayersTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Chi usa questo codice entrerà automaticamente come questo giocatore senza dover scegliere un nickname.',
+                  l10n.codeUserEntersAsPlayer,
                   style: GoogleFonts.lato(
                     color: AppTheme.cream.withValues(alpha: 0.7),
                     fontSize: 12,
@@ -900,7 +889,7 @@ class _PlayersTab extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Chiudi', style: GoogleFonts.lato(color: AppTheme.gold)),
+                child: Text(l10n.close, style: GoogleFonts.lato(color: AppTheme.gold)),
               ),
             ],
           ),
@@ -910,7 +899,7 @@ class _PlayersTab extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Errore: $e'),
+            content: Text('${l10n.error}: $e'),
             backgroundColor: AppTheme.accentRed,
           ),
         );
@@ -919,12 +908,13 @@ class _PlayersTab extends StatelessWidget {
   }
 
   Future<void> _removePlayer(BuildContext context, Player player) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Text(
-          'Elimina giocatore',
+          l10n.deletePlayer,
           style: GoogleFonts.playfairDisplay(color: AppTheme.cream),
         ),
         content: Column(
@@ -932,7 +922,7 @@ class _PlayersTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Vuoi eliminare "${player.name}" dalla sessione?',
+              l10n.deletePlayerConfirm(player.name),
               style: GoogleFonts.lato(color: AppTheme.cream),
             ),
             const SizedBox(height: 16),
@@ -949,7 +939,7 @@ class _PlayersTab extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'ATTENZIONE: Tutti i movimenti che coinvolgono questo giocatore (sia in entrata che in uscita) verranno eliminati definitivamente.',
+                      l10n.warningMovementsDeleted,
                       style: GoogleFonts.lato(
                         color: AppTheme.accentRed,
                         fontSize: 12,
@@ -965,12 +955,12 @@ class _PlayersTab extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Annulla', style: GoogleFonts.lato(color: AppTheme.gold)),
+            child: Text(l10n.cancel, style: GoogleFonts.lato(color: AppTheme.gold)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentRed),
-            child: const Text('Elimina'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -986,6 +976,7 @@ class _PlayersTab extends StatelessWidget {
   }
 
   void _showPlayerOptions(BuildContext context, Player player) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.primaryGreen,
@@ -1016,7 +1007,7 @@ class _PlayersTab extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              player.isLinkedToUser ? 'Collegato a un account' : 'Non collegato a un account',
+              player.isLinkedToUser ? l10n.linkedToAccount : l10n.notLinkedToAccount,
               style: GoogleFonts.lato(
                 fontSize: 12,
                 color: AppTheme.cream.withValues(alpha: 0.5),
@@ -1026,13 +1017,13 @@ class _PlayersTab extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.link, color: AppTheme.gold),
               title: Text(
-                player.joinCode != null ? 'Visualizza codice invito' : 'Genera codice invito',
+                player.joinCode != null ? l10n.viewInviteCode : l10n.generateInviteCode,
                 style: GoogleFonts.lato(color: AppTheme.cream),
               ),
               subtitle: Text(
                 player.isLinkedToUser 
-                    ? 'Genera un codice per far subentrare qualcun altro'
-                    : 'Permetti a qualcuno di entrare come questo giocatore',
+                    ? l10n.generateCodeToReplace
+                    : l10n.generateCodeToLetSomeoneJoin,
                 style: GoogleFonts.lato(
                   fontSize: 11,
                   color: AppTheme.cream.withValues(alpha: 0.5),
@@ -1052,11 +1043,11 @@ class _PlayersTab extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
               title: Text(
-                'Elimina giocatore',
+                l10n.deletePlayer,
                 style: GoogleFonts.lato(color: AppTheme.accentRed),
               ),
               subtitle: Text(
-                'Rimuove anche tutti i movimenti associati',
+                l10n.alsoRemovesMovements,
                 style: GoogleFonts.lato(
                   fontSize: 11,
                   color: AppTheme.accentRed.withValues(alpha: 0.7),
@@ -1077,19 +1068,20 @@ class _PlayersTab extends StatelessWidget {
   }
 
   void _showExistingJoinCode(BuildContext context, Player player) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.primaryGreen,
         title: Text(
-          'Codice Invito Attivo',
+          l10n.activeInviteCode,
           style: GoogleFonts.playfairDisplay(color: AppTheme.cream),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Codice per entrare come "${player.name}":',
+              l10n.codeToJoinAs(player.name),
               style: GoogleFonts.lato(color: AppTheme.cream),
             ),
             const SizedBox(height: 16),
@@ -1117,8 +1109,8 @@ class _PlayersTab extends StatelessWidget {
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: player.joinCode!));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Codice copiato!'),
+                        SnackBar(
+                          content: Text(l10n.codeCopied),
                           backgroundColor: AppTheme.primaryGreen,
                         ),
                       );
@@ -1142,18 +1134,18 @@ class _PlayersTab extends StatelessWidget {
               );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Codice invalidato'),
+                  SnackBar(
+                    content: Text(l10n.codeInvalidated),
                     backgroundColor: AppTheme.primaryGreen,
                   ),
                 );
               }
             },
-            child: Text('Invalida codice', style: GoogleFonts.lato(color: AppTheme.accentRed)),
+            child: Text(l10n.invalidateCode, style: GoogleFonts.lato(color: AppTheme.accentRed)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Chiudi', style: GoogleFonts.lato(color: AppTheme.gold)),
+            child: Text(l10n.close, style: GoogleFonts.lato(color: AppTheme.gold)),
           ),
         ],
       ),
@@ -1162,6 +1154,7 @@ class _PlayersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final players = session.players.toList()
       ..sort((a, b) => a.isAdmin ? -1 : (b.isAdmin ? 1 : a.name.compareTo(b.name)));
 
@@ -1220,12 +1213,12 @@ class _PlayersTab extends StatelessWidget {
             ),
             subtitle: Text(
               player.isAdmin 
-                  ? 'Amministratore' 
+                  ? l10n.administrator 
                   : player.isLinkedToUser 
-                      ? 'Collegato' 
+                      ? l10n.linked 
                       : player.hasActiveJoinCode 
-                          ? 'Invito attivo' 
-                          : 'Non collegato',
+                          ? l10n.activeInvite 
+                          : l10n.notLinked,
               style: GoogleFonts.lato(
                 fontSize: 12,
                 color: player.hasActiveJoinCode 
@@ -1241,9 +1234,9 @@ class _PlayersTab extends StatelessWidget {
                   )
                 : null,
           ),
-        ).animate(delay: Duration(milliseconds: 50 * index))
-          .fadeIn(duration: 300.ms)
-          .slideX(begin: 0.1, end: 0);
+        ).animate()
+          .fadeIn(duration: 200.ms)
+          .slideX(begin: 0.05, end: 0);
       },
     );
   }

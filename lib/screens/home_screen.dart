@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
@@ -36,6 +37,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final authService = context.watch<AuthService>();
     final dbService = context.read<DatabaseService>();
     final user = authService.currentUser;
@@ -57,7 +59,7 @@ class HomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Ciao,',
+                            l10n.hello,
                             style: GoogleFonts.lato(
                               fontSize: 16,
                               color: AppTheme.cream.withValues(alpha: 0.7),
@@ -65,8 +67,8 @@ class HomeScreen extends StatelessWidget {
                           ),
                           Text(
                             isFullyLoggedIn 
-                                ? (user.displayName ?? user.email?.split('@').first ?? 'Giocatore')
-                                : 'Ospite',
+                                ? (user.displayName ?? user.email?.split('@').first ?? l10n.player)
+                                : l10n.guest,
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -82,7 +84,7 @@ class HomeScreen extends StatelessWidget {
                       IconButton(
                         onPressed: () => authService.signOut(),
                         icon: const Icon(Icons.logout, color: AppTheme.gold),
-                        tooltip: 'Esci',
+                        tooltip: l10n.logout,
                       ).animate()
                         .fadeIn(delay: 300.ms, duration: 500.ms)
                     else
@@ -95,7 +97,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.login, color: AppTheme.gold),
                         label: Text(
-                          'Accedi',
+                          l10n.login,
                           style: GoogleFonts.lato(color: AppTheme.gold),
                         ),
                       ).animate()
@@ -112,7 +114,7 @@ class HomeScreen extends StatelessWidget {
                     Expanded(
                       child: _ActionCard(
                         icon: Icons.add_circle_outline,
-                        title: 'Nuova Sessione',
+                        title: l10n.newSession,
                         color: AppTheme.accentRed,
                         onTap: () => _handleCreateSession(context, isFullyLoggedIn),
                       ),
@@ -121,7 +123,7 @@ class HomeScreen extends StatelessWidget {
                     Expanded(
                       child: _ActionCard(
                         icon: Icons.group_add_outlined,
-                        title: 'Unisciti',
+                        title: l10n.join,
                         color: AppTheme.gold,
                         onTap: () => Navigator.push(
                           context,
@@ -148,7 +150,7 @@ class HomeScreen extends StatelessWidget {
                       const Icon(Icons.casino, color: AppTheme.gold, size: 24),
                       const SizedBox(width: 12),
                       Text(
-                        'Le tue sessioni',
+                        l10n.yourSessions,
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -176,7 +178,7 @@ class HomeScreen extends StatelessWidget {
                       if (snapshot.hasError) {
                         return Center(
                           child: Text(
-                            'Errore: ${snapshot.error}',
+                            '${l10n.error}: ${snapshot.error}',
                             style: GoogleFonts.lato(color: AppTheme.cream),
                           ),
                         );
@@ -196,7 +198,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Nessuna sessione ancora',
+                                l10n.noSessionsYet,
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 18,
                                   color: AppTheme.cream.withValues(alpha: 0.5),
@@ -204,7 +206,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Crea una nuova sessione per iniziare!',
+                                l10n.createNewSessionToStart,
                                 style: GoogleFonts.lato(
                                   fontSize: 14,
                                   color: AppTheme.cream.withValues(alpha: 0.3),
@@ -221,10 +223,11 @@ class HomeScreen extends StatelessWidget {
                         itemCount: sessions.length,
                         itemBuilder: (context, index) {
                           final session = sessions[index];
-                          return _SessionCard(session: session)
-                            .animate(delay: Duration(milliseconds: 100 * index))
-                            .fadeIn(duration: 400.ms)
-                            .slideX(begin: 0.1, end: 0);
+                          final isAdmin = session.adminId == user.uid;
+                          return _SessionCard(session: session, isAdmin: isAdmin)
+                            .animate()
+                            .fadeIn(duration: 200.ms)
+                            .slideX(begin: 0.05, end: 0);
                         },
                       );
                     },
@@ -244,7 +247,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Benvenuto!',
+                          l10n.welcome,
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -255,7 +258,7 @@ class HomeScreen extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 40),
                           child: Text(
-                            'Unisciti a una sessione esistente o accedi per crearne una nuova',
+                            l10n.joinExistingOrLoginToCreate,
                             style: GoogleFonts.lato(
                               fontSize: 14,
                               color: AppTheme.cream.withValues(alpha: 0.5),
@@ -321,12 +324,15 @@ class _ActionCard extends StatelessWidget {
 
 class _SessionCard extends StatelessWidget {
   final GameSession session;
+  final bool isAdmin;
 
-  const _SessionCard({required this.session});
+  const _SessionCard({required this.session, required this.isAdmin});
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'it_IT');
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
+    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', locale == 'it' ? 'it_IT' : 'en_US');
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -361,17 +367,42 @@ class _SessionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      session.name,
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.cream,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            session.name,
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.cream,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isAdmin 
+                                ? AppTheme.gold.withValues(alpha: 0.2)
+                                : AppTheme.primaryGreen.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            isAdmin ? l10n.admin : l10n.participant,
+                            style: GoogleFonts.lato(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isAdmin ? AppTheme.gold : AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${session.players.length} giocatori • ${session.movements.length} movimenti',
+                      l10n.playersAndMovements(session.players.length, session.movements.length),
                       style: GoogleFonts.lato(
                         fontSize: 12,
                         color: AppTheme.cream.withValues(alpha: 0.6),

@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 import '../models/session.dart';
 import '../models/player.dart';
 import '../models/movement.dart';
-import '../models/game_mode.dart';
 import '../models/game_hand.dart';
 
 class DatabaseService {
@@ -23,7 +22,6 @@ class DatabaseService {
     required String name,
     required String adminId,
     required String adminName,
-    GameMode gameMode = const GameMode(type: GameType.libera),
   }) async {
     final sessionId = _uuid.v4();
     final shareCode = _generateShareCode();
@@ -45,7 +43,6 @@ class DatabaseService {
       movements: [],
       createdAt: DateTime.now(),
       isActive: true,
-      gameMode: gameMode,
     );
 
     await _sessionsCollection.doc(sessionId).set(session.toMap());
@@ -78,19 +75,44 @@ class DatabaseService {
     });
   }
 
-  // Ottieni tutte le sessioni di un utente
+  // Ottieni tutte le sessioni di un utente (come admin o come partecipante)
   Stream<List<GameSession>> streamUserSessions(String userId) {
-    return _sessionsCollection
+    // Stream per le sessioni dove l'utente è admin
+    final adminStream = _sessionsCollection
         .where('adminId', isEqualTo: userId)
-        .snapshots()
-        .map((snapshot) {
-          final sessions = snapshot.docs
-              .map((doc) => GameSession.fromMap(doc.data()))
-              .toList();
-          // Ordina lato client per evitare di richiedere un indice composito
-          sessions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return sessions;
-        });
+        .snapshots();
+    
+    // Stream per le sessioni dove l'utente è partecipante
+    final participantStream = _sessionsCollection
+        .where('participantUserIds', arrayContains: userId)
+        .snapshots();
+    
+    // Combina i due stream
+    return adminStream.asyncExpand((adminSnapshot) {
+      return participantStream.map((participantSnapshot) {
+        final adminSessions = adminSnapshot.docs
+            .map((doc) => GameSession.fromMap(doc.data()))
+            .toList();
+        
+        final participantSessions = participantSnapshot.docs
+            .map((doc) => GameSession.fromMap(doc.data()))
+            .toList();
+        
+        // Combina e rimuovi duplicati (usa l'id come chiave)
+        final allSessions = <String, GameSession>{};
+        for (final session in adminSessions) {
+          allSessions[session.id] = session;
+        }
+        for (final session in participantSessions) {
+          allSessions[session.id] = session;
+        }
+        
+        // Ordina per data di creazione decrescente
+        final sessions = allSessions.values.toList();
+        sessions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return sessions;
+      });
+    });
   }
 
   // Unisciti a una sessione come giocatore
@@ -98,6 +120,7 @@ class DatabaseService {
     required String sessionId,
     required String playerName,
     String? userId,
+    bool isUserLoggedIn = false,
   }) async {
     final player = Player(
       id: _uuid.v4(),
@@ -107,9 +130,16 @@ class DatabaseService {
       joinedAt: DateTime.now(),
     );
 
-    await _sessionsCollection.doc(sessionId).update({
+    final updateData = <String, dynamic>{
       'players': FieldValue.arrayUnion([player.toMap()]),
-    });
+    };
+    
+    // Se l'utente è loggato (non anonimo), aggiungilo ai participantUserIds
+    if (isUserLoggedIn && userId != null) {
+      updateData['participantUserIds'] = FieldValue.arrayUnion([userId]);
+    }
+
+    await _sessionsCollection.doc(sessionId).update(updateData);
 
     return player;
   }
@@ -317,6 +347,7 @@ class DatabaseService {
     required String sessionId,
     required Player player,
     required String userId,
+    bool isUserLoggedIn = false,
   }) async {
     final session = await getSession(sessionId);
     if (session == null) {
@@ -330,9 +361,16 @@ class DatabaseService {
       return p;
     }).toList();
 
-    await _sessionsCollection.doc(sessionId).update({
+    final updateData = <String, dynamic>{
       'players': updatedPlayers.map((p) => p.toMap()).toList(),
-    });
+    };
+    
+    // Se l'utente è loggato (non anonimo), aggiungilo ai participantUserIds
+    if (isUserLoggedIn) {
+      updateData['participantUserIds'] = FieldValue.arrayUnion([userId]);
+    }
+
+    await _sessionsCollection.doc(sessionId).update(updateData);
   }
 
   // ===== GESTIONE MANO ATTIVA =====

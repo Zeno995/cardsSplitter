@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
@@ -36,6 +38,16 @@ class CardsSplitterApp extends StatelessWidget {
         title: 'Cards Splitter',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('it'),
+        ],
         home: const AuthWrapper(),
         onGenerateRoute: (settings) {
           // Deep link handling per join session

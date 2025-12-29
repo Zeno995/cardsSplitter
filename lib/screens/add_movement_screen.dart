@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/session.dart';
 import '../models/player.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/amount_keypad.dart';
 
 class AddMovementScreen extends StatefulWidget {
   final GameSession session;
@@ -54,12 +56,13 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
   }
 
   Future<void> _addMovement() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_fromPlayer == null || _toPlayer == null) {
-      _showError('Seleziona entrambi i giocatori');
+      _showError(l10n.selectBothPlayers);
       return;
     }
     if (_fromPlayer!.id == _toPlayer!.id) {
-      _showError('I giocatori devono essere diversi');
+      _showError(l10n.playersMustBeDifferent);
       return;
     }
 
@@ -67,7 +70,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
       _amountController.text.replaceAll(',', '.'),
     );
     if (amount == null || amount <= 0) {
-      _showError('Inserisci un importo valido');
+      _showError(l10n.enterValidAmount);
       return;
     }
 
@@ -91,14 +94,14 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Movimento aggiunto!'),
+          SnackBar(
+            content: Text(l10n.movementAdded),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
       }
     } catch (e) {
-      _showError('Errore: $e');
+      _showError('${l10n.error}: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -115,9 +118,10 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nuovo Movimento'),
+        title: Text(l10n.newMovement),
       ),
       body: ChristmasBackground(
         child: SafeArea(
@@ -127,7 +131,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Registra un pagamento',
+                  l10n.recordPayment,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -163,7 +167,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Da chi (paga)',
+                                l10n.fromWhoPays,
                                 style: GoogleFonts.lato(
                                   color: AppTheme.cream.withValues(alpha: 0.7),
                                   fontSize: 14,
@@ -178,7 +182,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  'Tu',
+                                  l10n.you,
                                   style: GoogleFonts.lato(
                                     color: AppTheme.gold,
                                     fontSize: 11,
@@ -192,8 +196,8 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                         if (_canChangeFromPlayer)
                           DropdownButtonFormField<Player>(
                             value: _fromPlayer,
-                            decoration: const InputDecoration(
-                              hintText: 'Seleziona giocatore',
+                            decoration: InputDecoration(
+                              hintText: l10n.selectPlayer,
                             ),
                             dropdownColor: AppTheme.primaryGreen,
                             style: GoogleFonts.lato(color: AppTheme.cream),
@@ -216,7 +220,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                               border: Border.all(color: AppTheme.cream.withValues(alpha: 0.2)),
                             ),
                             child: Text(
-                              _fromPlayer?.name ?? 'Non assegnato',
+                              _fromPlayer?.name ?? l10n.notAssigned,
                               style: GoogleFonts.lato(
                                 color: AppTheme.cream,
                                 fontSize: 16,
@@ -273,7 +277,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              'A chi (riceve)',
+                              l10n.toWhoReceives,
                               style: GoogleFonts.lato(
                                 color: AppTheme.cream.withValues(alpha: 0.7),
                                 fontSize: 14,
@@ -284,8 +288,8 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                         const SizedBox(height: 12),
                         DropdownButtonFormField<Player>(
                           value: _toPlayer,
-                          decoration: const InputDecoration(
-                            hintText: 'Seleziona giocatore',
+                          decoration: InputDecoration(
+                            hintText: l10n.selectPlayer,
                           ),
                           dropdownColor: AppTheme.primaryGreen,
                           style: GoogleFonts.lato(color: AppTheme.cream),
@@ -316,7 +320,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Importo',
+                          l10n.amount,
                           style: GoogleFonts.lato(
                             color: AppTheme.cream.withValues(alpha: 0.7),
                             fontSize: 14,
@@ -346,6 +350,8 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        AmountKeypad(controller: _amountController),
                       ],
                     ),
                   ),
@@ -363,10 +369,10 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                       controller: _descriptionController,
                       style: GoogleFonts.lato(color: AppTheme.cream),
                       maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Descrizione (opzionale)',
-                        hintText: 'es. Vittoria a poker',
-                        prefixIcon: Icon(Icons.note, color: AppTheme.gold),
+                      decoration: InputDecoration(
+                        labelText: l10n.descriptionOptional,
+                        hintText: l10n.descriptionHint,
+                        prefixIcon: const Icon(Icons.note, color: AppTheme.gold),
                       ),
                     ),
                   ),
@@ -388,7 +394,7 @@ class _AddMovementScreenState extends State<AddMovementScreen> {
                           ),
                         )
                       : const Icon(Icons.check),
-                  label: Text(_isLoading ? 'Salvataggio...' : 'Salva Movimento'),
+                  label: Text(_isLoading ? l10n.saving : l10n.saveMovement),
                 ).animate()
                   .fadeIn(delay: 600.ms, duration: 400.ms)
                   .slideY(begin: 0.2, end: 0),
