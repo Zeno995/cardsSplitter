@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../models/game_mode.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import 'session_detail_screen.dart';
+import 'select_game_mode_screen.dart';
 
 class CreateSessionScreen extends StatefulWidget {
   const CreateSessionScreen({super.key});
@@ -18,6 +20,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
   final _nameController = TextEditingController();
   final _nicknameController = TextEditingController();
   bool _isLoading = false;
+  GameMode _selectedGameMode = const GameMode(type: GameType.libera);
 
   @override
   void initState() {
@@ -31,6 +34,19 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
     _nameController.dispose();
     _nicknameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectGameMode() async {
+    final result = await Navigator.push<GameMode>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectGameModeScreen(initialMode: _selectedGameMode),
+      ),
+    );
+    
+    if (result != null) {
+      setState(() => _selectedGameMode = result);
+    }
   }
 
   Future<void> _createSession() async {
@@ -54,6 +70,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
         name: _nameController.text.trim(),
         adminId: user.uid,
         adminName: _nicknameController.text.trim(),
+        gameMode: _selectedGameMode,
       );
 
       if (mounted) {
@@ -145,6 +162,68 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
                             labelText: 'Il tuo nickname',
                             hintText: 'Come vuoi essere chiamato',
                             prefixIcon: Icon(Icons.person, color: AppTheme.gold),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
+                        
+                        // Selettore modalità di gioco
+                        InkWell(
+                          onTap: _selectGameMode,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.darkGreen.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppTheme.gold.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  _selectedGameMode.icon,
+                                  style: const TextStyle(fontSize: 28),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Modalità di gioco',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 12,
+                                          color: AppTheme.cream.withValues(alpha: 0.6),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _selectedGameMode.displayName,
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.gold,
+                                        ),
+                                      ),
+                                      if (_selectedGameMode.variantDisplayName != null)
+                                        Text(
+                                          _selectedGameMode.variantDisplayName!,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 12,
+                                            color: AppTheme.cream.withValues(alpha: 0.7),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: AppTheme.gold,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         

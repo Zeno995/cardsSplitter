@@ -7,11 +7,13 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/session.dart';
 import '../models/player.dart';
+import '../models/game_mode.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import 'add_movement_screen.dart';
 import 'settlements_screen.dart';
+import 'play_hand_screen.dart';
 
 class SessionDetailScreen extends StatefulWidget {
   final String sessionId;
@@ -124,6 +126,89 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
       const SnackBar(
         content: Text('Codice copiato!'),
         backgroundColor: AppTheme.primaryGreen,
+      ),
+    );
+  }
+
+  void _showGameModeRules(GameMode mode) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.primaryGreen,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.cream.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    mode.icon,
+                    style: const TextStyle(fontSize: 32),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          mode.displayName,
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.gold,
+                          ),
+                        ),
+                        if (mode.variantDisplayName != null)
+                          Text(
+                            'Variante: ${mode.variantDisplayName}',
+                            style: GoogleFonts.lato(
+                              fontSize: 14,
+                              color: AppTheme.cream.withValues(alpha: 0.7),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: AppTheme.cream),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Text(
+                    mode.fullRules,
+                    style: GoogleFonts.lato(
+                      fontSize: 15,
+                      color: AppTheme.cream,
+                      height: 1.6,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -269,7 +354,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
           body: ChristmasBackground(
             child: Column(
               children: [
-                // Codice sessione
+                // Codice sessione e modalità gioco
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -278,29 +363,76 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppTheme.gold.withValues(alpha: 0.3)),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
                     children: [
-                      Text(
-                        'Codice: ',
-                        style: GoogleFonts.lato(color: AppTheme.cream.withValues(alpha: 0.7)),
-                      ),
-                      Text(
-                        session.shareCode,
-                        style: GoogleFonts.lato(
-                          color: AppTheme.gold,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
+                      // Modalità di gioco
+                      InkWell(
+                        onTap: () => _showGameModeRules(session.gameMode),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                session.gameMode.icon,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                session.gameMode.displayName,
+                                style: GoogleFonts.playfairDisplay(
+                                  color: AppTheme.gold,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (session.gameMode.variantDisplayName != null) ...[
+                                Text(
+                                  ' • ${session.gameMode.variantDisplayName}',
+                                  style: GoogleFonts.lato(
+                                    color: AppTheme.cream.withValues(alpha: 0.7),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: AppTheme.gold.withValues(alpha: 0.7),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () => _copyCode(session.shareCode),
-                        icon: const Icon(Icons.copy, size: 18),
-                        color: AppTheme.gold,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                      Divider(color: AppTheme.gold.withValues(alpha: 0.2)),
+                      // Codice
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Codice: ',
+                            style: GoogleFonts.lato(color: AppTheme.cream.withValues(alpha: 0.7)),
+                          ),
+                          Text(
+                            session.shareCode,
+                            style: GoogleFonts.lato(
+                              color: AppTheme.gold,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => _copyCode(session.shareCode),
+                            icon: const Icon(Icons.copy, size: 18),
+                            color: AppTheme.gold,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -340,21 +472,50 @@ class _SessionDetailScreenState extends State<SessionDetailScreen>
                       label: const Text('Calcola'),
                     ),
                     const SizedBox(height: 12),
-                    FloatingActionButton.extended(
-                      heroTag: 'add',
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AddMovementScreen(
-                            session: session,
-                            currentPlayerId: currentPlayer?.id,
-                            isAdmin: isAdmin,
+                    // Bottone per nuova mano (solo se non è modalità libera)
+                    if (session.gameMode.type != GameType.libera)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: FloatingActionButton.extended(
+                          heroTag: 'play',
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PlayHandScreen(sessionId: session.id),
+                            ),
                           ),
+                          backgroundColor: session.activeHand != null 
+                              ? AppTheme.gold 
+                              : AppTheme.primaryGreen,
+                          foregroundColor: session.activeHand != null 
+                              ? AppTheme.darkGreen 
+                              : AppTheme.cream,
+                          icon: Text(
+                            session.gameMode.icon,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          label: Text(session.activeHand != null 
+                              ? 'Mano in Corso' 
+                              : 'Gioca Mano'),
                         ),
                       ),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Movimento'),
-                    ),
+                    // Movimento manuale (sempre disponibile per admin)
+                    if (isAdmin || session.gameMode.type == GameType.libera)
+                      FloatingActionButton.extended(
+                        heroTag: 'add',
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddMovementScreen(
+                              session: session,
+                              currentPlayerId: currentPlayer?.id,
+                              isAdmin: isAdmin,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Movimento'),
+                      ),
                   ],
                 ).animate()
                   .fadeIn(delay: 300.ms, duration: 400.ms)

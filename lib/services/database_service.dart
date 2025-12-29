@@ -3,6 +3,8 @@ import 'package:uuid/uuid.dart';
 import '../models/session.dart';
 import '../models/player.dart';
 import '../models/movement.dart';
+import '../models/game_mode.dart';
+import '../models/game_hand.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -21,6 +23,7 @@ class DatabaseService {
     required String name,
     required String adminId,
     required String adminName,
+    GameMode gameMode = const GameMode(type: GameType.libera),
   }) async {
     final sessionId = _uuid.v4();
     final shareCode = _generateShareCode();
@@ -42,6 +45,7 @@ class DatabaseService {
       movements: [],
       createdAt: DateTime.now(),
       isActive: true,
+      gameMode: gameMode,
     );
 
     await _sessionsCollection.doc(sessionId).set(session.toMap());
@@ -118,6 +122,7 @@ class DatabaseService {
     required double amount,
     String? description,
     required String createdBy,
+    String? handId,
   }) async {
     final movement = Movement(
       id: _uuid.v4(),
@@ -127,6 +132,7 @@ class DatabaseService {
       description: description,
       createdAt: DateTime.now(),
       createdBy: createdBy,
+      handId: handId,
     );
 
     await _sessionsCollection.doc(sessionId).update({
@@ -137,13 +143,60 @@ class DatabaseService {
   }
 
   // Rimuovi un movimento (solo admin)
+  // Se il movimento coinvolge il piatto e c'è una mano attiva, aggiorna il piatto
   Future<void> removeMovement({
     required String sessionId,
     required Movement movement,
   }) async {
+    // Prima rimuovi il movimento
     await _sessionsCollection.doc(sessionId).update({
       'movements': FieldValue.arrayRemove([movement.toMap()]),
     });
+
+    // Se il movimento coinvolge il piatto, aggiorna la mano attiva
+    final session = await getSession(sessionId);
+    if (session?.activeHand != null) {
+      final hand = session!.activeHand!;
+      double potAdjustment = 0;
+
+      // Se qualcuno aveva pagato al piatto, restituisci
+      if (movement.toPlayerId == '_piatto_') {
+        potAdjustment = -movement.amount;
+      }
+      // Se qualcuno aveva ricevuto dal piatto, aggiungi
+      else if (movement.fromPlayerId == '_piatto_') {
+        potAdjustment = movement.amount;
+      }
+
+      if (potAdjustment != 0) {
+        final newPot = (hand.dealerPot + potAdjustment).clamp(0.0, double.infinity).toDouble();
+        final newHand = hand.copyWith(dealerPot: newPot);
+        await updateActiveHand(sessionId: sessionId, hand: newHand);
+      }
+    }
+  }
+
+  // Annulla tutti i movimenti di una mano specifica (solo admin)
+  Future<void> cancelHandMovements({
+    required String sessionId,
+    required String handId,
+  }) async {
+    final session = await getSession(sessionId);
+    if (session == null) return;
+
+    // Trova tutti i movimenti associati a questa mano
+    final movementsToRemove = session.movements
+        .where((m) => m.handId == handId)
+        .toList();
+
+    if (movementsToRemove.isEmpty) return;
+
+    // Rimuovi tutti i movimenti della mano
+    for (final movement in movementsToRemove) {
+      await _sessionsCollection.doc(sessionId).update({
+        'movements': FieldValue.arrayRemove([movement.toMap()]),
+      });
+    }
   }
 
   // Aggiorna la sessione
@@ -279,6 +332,37 @@ class DatabaseService {
 
     await _sessionsCollection.doc(sessionId).update({
       'players': updatedPlayers.map((p) => p.toMap()).toList(),
+    });
+  }
+
+  // ===== GESTIONE MANO ATTIVA =====
+
+  /// Avvia una nuova mano
+  Future<void> startActiveHand({
+    required String sessionId,
+    required ActiveHand hand,
+  }) async {
+    await _sessionsCollection.doc(sessionId).update({
+      'activeHand': hand.toMap(),
+    });
+  }
+
+  /// Aggiorna la mano attiva
+  Future<void> updateActiveHand({
+    required String sessionId,
+    required ActiveHand hand,
+  }) async {
+    await _sessionsCollection.doc(sessionId).update({
+      'activeHand': hand.toMap(),
+    });
+  }
+
+  /// Termina la mano attiva
+  Future<void> endActiveHand({
+    required String sessionId,
+  }) async {
+    await _sessionsCollection.doc(sessionId).update({
+      'activeHand': null,
     });
   }
 }

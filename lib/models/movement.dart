@@ -6,6 +6,7 @@ class Movement {
   final String? description;
   final DateTime createdAt;
   final String createdBy;
+  final String? handId; // ID della mano a cui appartiene questo movimento (per annullamento)
 
   Movement({
     required this.id,
@@ -15,6 +16,7 @@ class Movement {
     this.description,
     required this.createdAt,
     required this.createdBy,
+    this.handId,
   });
 
   factory Movement.fromMap(Map<String, dynamic> map) {
@@ -26,6 +28,7 @@ class Movement {
       description: map['description'] as String?,
       createdAt: DateTime.parse(map['createdAt'] as String),
       createdBy: map['createdBy'] as String,
+      handId: map['handId'] as String?,
     );
   }
 
@@ -38,7 +41,30 @@ class Movement {
       'description': description,
       'createdAt': createdAt.toIso8601String(),
       'createdBy': createdBy,
+      'handId': handId,
     };
+  }
+
+  Movement copyWith({
+    String? id,
+    String? fromPlayerId,
+    String? toPlayerId,
+    double? amount,
+    String? description,
+    DateTime? createdAt,
+    String? createdBy,
+    String? handId,
+  }) {
+    return Movement(
+      id: id ?? this.id,
+      fromPlayerId: fromPlayerId ?? this.fromPlayerId,
+      toPlayerId: toPlayerId ?? this.toPlayerId,
+      amount: amount ?? this.amount,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+      createdBy: createdBy ?? this.createdBy,
+      handId: handId ?? this.handId,
+    );
   }
 }
 
