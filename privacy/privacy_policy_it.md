@@ -112,3 +112,4 @@ Hai il diritto di presentare reclamo all'autorità di controllo competente. In I
 
 *Questa informativa è stata redatta in conformità al Regolamento (UE) 2016/679 (GDPR) e alla normativa italiana in materia di protezione dei dati personali.*
 
+

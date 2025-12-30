@@ -116,3 +116,4 @@ For users in other jurisdictions, please refer to your local privacy laws and su
 
 *This policy has been drafted in compliance with Regulation (EU) 2016/679 (GDPR) and applicable data protection legislation.*
 
+

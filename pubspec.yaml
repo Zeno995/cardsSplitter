@@ -1,8 +1,8 @@
-name: cards_splitter
+name: CardSplitter
 description: "App per gestire i conti dei giochi natalizi"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.7.2
